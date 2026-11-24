@@ -118,7 +118,7 @@ const POINT_UNIT = 10;
 const BET_SPEC: ActionSpec = {
   kind: "params",
   fields: [
-    { key: "front", label: "前注", min: 10, max: 50, step: POINT_UNIT, defaultValue: 10 },
+    { key: "front", label: "前注", min: 0, max: 50, step: POINT_UNIT, defaultValue: 10 },
     { key: "back", label: "后注", min: 0, max: 100, step: POINT_UNIT, defaultValue: 10 },
   ],
 };
@@ -136,7 +136,7 @@ export const niuniuModule: GameModule = {
       "01 · 组牌：每人 5 张牌，扣着发。所有人下注完成后才一起亮牌，下注时谁的牌都看不到。任取 3 张点数和为 10 的倍数（10、20、30 都算）即“有牛”，系统自动选择最优组合。",
       "02 · 点数：A=1，2–10 按牌面，J/Q/K 与大小王均为 10 点。后两张和取个位，整十为牛牛。",
       "03 · 比牌：有牛胜无牛，牛值更大者胜；相同则比较最大单张的点数与花色（大王＞小王＞黑桃＞红桃＞梅花＞方块）。10、J、Q、K 都算 10 点，所以同花色的这几张比起来一样大。完全相同归庄。",
-      "04 · 倍率与注额：无牛至牛六 ×1、牛七 ×2、牛八 ×3、牛九 ×4、牛牛 ×5。前注吃倍率，后注始终 ×1。注额以 10 点为单位：前注 10–50，后注 0–100。",
+      "04 · 倍率与注额：无牛至牛六 ×1、牛七 ×2、牛八 ×3、牛九 ×4、牛牛 ×5。前注吃倍率，后注始终 ×1。注额以 10 点为单位：前注 0–50，后注 0–100，至少下一处。",
       "05 · 理论期望：庄闲的牌可以互换，输赢两边的倍率正好抵消，庄家优势只来自“完全相同归庄”（平局概率 1.77%）。精确计算：每 1 点前注长期亏 0.0231，每 1 点后注亏 0.0177，约为投注额的 1.77%–2.31%。换什么下注法都只改变波动，不改变这个比例。",
     ].join("\n"),
     educationNotes: [
@@ -166,11 +166,15 @@ export const niuniuModule: GameModule = {
 
   validate(_state: unknown, _seatIndex: number, action: unknown): string | null {
     if (!isPlaceBet(action)) return "Action must be place_bet";
-    if (!isStake(action.front, 10, 50)) {
-      return "front must be a multiple of 10 between 10 and 50";
+    if (!isStake(action.front, 0, 50)) {
+      return "front must be a multiple of 10 between 0 and 50";
     }
     if (!isStake(action.back, 0, 100)) {
       return "back must be a multiple of 10 between 0 and 100";
+    }
+    // 至少下一处：前注可以清零，最小一注是一枚 10 点筹码放在后注。
+    if (action.front + action.back < POINT_UNIT) {
+      return "bet at least 10 on front or back";
     }
     return null;
   },
@@ -181,7 +185,7 @@ export const niuniuModule: GameModule = {
   },
 
   minStake(): number {
-    return niuniuModule.maxLoss({ kind: "place_bet", front: 10, back: 0 });
+    return niuniuModule.maxLoss({ kind: "place_bet", front: 0, back: POINT_UNIT });
   },
 
   pointUnit(): number {

@@ -724,7 +724,7 @@ export default function Simulator() {
     const draft = betDrafts[seatIndex] ?? { front: 10, back: 10 };
     const action = { kind: "place_bet", front: draft.front, back: draft.back };
     if (game.validate(current.roundCtx.gameState, seatIndex, action, seat)) {
-      setNotice("注额不合法：以 10 点为单位，前注 10–50，后注 0–100。");
+      setNotice("注额不合法：以 10 点为单位，前注 0–50，后注 0–100，至少下一处。");
       return;
     }
     const worstLoss = game.maxLoss(action);

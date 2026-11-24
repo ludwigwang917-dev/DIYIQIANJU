@@ -87,7 +87,7 @@ export const niuniuStrategies: StrategyModule[] = [
     "凯利",
     "按本金比例",
     "用当前本金的一小部分下注；负期望下比例管理不能创造优势。",
-    ({ bankroll }) => ({ front: bankroll * 0.015, back: bankroll * 0.03 }),
+    ({ bankroll }) => ({ front: Math.max(10, bankroll * 0.015), back: bankroll * 0.03 }),
   ),
   defineStrategy("conservative", "保守", "低波动", "只下最小注：前注 10、不下后注，用更长时间换取同一个长期方向。", () => ({
     front: 10,

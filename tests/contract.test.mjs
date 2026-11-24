@@ -90,9 +90,13 @@ test("rejects illegal game actions", () => {
   table = dispatch(table, { type: "table/start_round" }, rng);
   assert.equal(table.phase, "awaiting_bets");
 
-  assert.throws(() =>
-    dispatch(table, { type: "game/action", seatIndex: 0, action: { kind: "place_bet", front: 0, back: 10 } }, rng),
+  // Front may be cleared to 0, but at least one chip must be down somewhere.
+  assert.throws(
+    () => dispatch(table, { type: "game/action", seatIndex: 0, action: { kind: "place_bet", front: 0, back: 0 } }, rng),
+    /at least 10/,
   );
+  assert.equal(getGame("niuniu").validate(null, 0, { kind: "place_bet", front: 0, back: 10 }), null);
+  assert.equal(getGame("niuniu").minStake(), 10);
   assert.throws(() =>
     dispatch(table, { type: "game/action", seatIndex: 0, action: { kind: "place_bet", front: 51, back: 10 } }, rng),
   );
@@ -462,7 +466,6 @@ test("rebuy tracks buy-ins and leaves the zero-sum ledger untouched", () => {
   const { table, rng } = bustHumanSeat();
   const dealerProfit = table.dealerProfit;
   assert.throws(() => dispatch(table, { type: "table/rebuy", seatIndex: 0, amount: 0 }, rng));
-  assert.throws(() => dispatch(table, { type: "table/rebuy", seatIndex: 0, amount: 40 }, rng), /below/);
   assert.throws(() => dispatch(table, { type: "table/rebuy", seatIndex: 0, amount: 55 }, rng), /multiple of 10/);
   assert.throws(() => dispatch(table, { type: "table/rebuy", seatIndex: 0, amount: 510 }, rng), /limit/);
   let next = dispatch(table, { type: "table/rebuy", seatIndex: 0, amount: 50 }, rng);
@@ -594,7 +597,7 @@ test("seat_player requires an amount brought; the plan is optional and validated
   const sit = (table, seatIndex, profile, plan) =>
     dispatch(table, { type: "table/seat_player", seatIndex, profile, control: { kind: "human" }, plan }, rng);
   assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 0 }), /minimum stake/);
-  assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 40 }), /minimum stake/);
+  assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 5 }), /minimum stake|multiple/);
   assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 105 }), /multiple of 10/);
   assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 500 }, { stopWin: 0 }), /positive integer/);
   assert.throws(() => sit(empty, 0, { id: "a", name: "甲", bankroll: 500 }, { maxRounds: 2.5 }), /positive integer/);
