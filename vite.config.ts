@@ -19,6 +19,12 @@ const localBindingConfig = {
   // Pinned so a rebuild on a later day does not silently change runtime behaviour.
   compatibility_date: "2026-05-15",
   compatibility_flags: ["nodejs_compat"],
+  // The site's own domain (bought on Cloudflare, zone in the same account).
+  // `wrangler deploy` attaches these and Cloudflare issues the certificates.
+  routes: [
+    { pattern: "diyiqianju.com", custom_domain: true },
+    { pattern: "www.diyiqianju.com", custom_domain: true },
+  ],
   d1_databases: d1
     ? [
         {
