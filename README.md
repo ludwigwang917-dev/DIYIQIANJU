@@ -43,4 +43,4 @@ npm run deploy        # 同上，全部通过后部署（需先 wrangler login�
 
 源代码以 [MIT 许可证](LICENSE) 开源。
 
-“第一千局”这个名称、“千”字徽记，以及 `design/brand/`、`app/icon.svg`、`app/apple-icon.png`、`app/opengraph-image.png` 里的品牌图形**不在 MIT 许可范围内**。发布修改版时，请换用别的名称和徽记，以免被误认为本项目。
+“第一千局”这个名称、“千”字徽记，以及 `design/brand/`、`app/icon.svg`、`app/apple-icon.png`、`app/opengraph-image.png` 里的品牌图形**不在 MIT 许可范围内**。发布修改版时，请换用别的名称和徽记，以免被误认为本项目。详见 [TRADEMARKS.md](TRADEMARKS.md)。
