@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  public/favicon.ico 的生成页：用浏览器打开本文件，点“下载 favicon.ico”，把下载的文件放到 public/。
+  （无头 Edge 截不了 48×48 这么小的窗口，所以改用 canvas 画，再在页面里包成 ICO。）
+  浏览器标签页主要用 app/icon.svg；favicon.ico 只是给会自动请求 /favicon.ico 的浏览器和爬虫，
+  让这类请求由静态资源直接返回，不用每次都经过 Worker 渲染 404 页。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>favicon.ico 生成</title>
+<style>
+  body { margin: 40px; background: #0b0b0a; color: #ece3cf; font: 14px "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+  canvas { display: block; margin: 16px 0; width: 96px; height: 96px; image-rendering: pixelated; }
+  a { color: #c9a35c; }
+</style>
+</head>
+<body>
+  <p>48×48 印章图标（放大两倍显示）</p>
+  <canvas id="c" width="48" height="48"></canvas>
+  <a id="dl" download="favicon.ico" href="#">下载 favicon.ico</a>
+  <script>
+    (async () => {
+      await document.fonts.load('700 30px "Noto Serif SC"', "千");
+      const c = document.getElementById("c");
+      const g = c.getContext("2d");
+      const grad = g.createRadialGradient(16.8, 14.4, 0, 16.8, 14.4, 38.4);
+      grad.addColorStop(0, "#e6c886");
+      grad.addColorStop(0.7, "#a8823f");
+      grad.addColorStop(1, "#6f5426");
+      g.beginPath(); g.arc(24, 24, 24, 0, Math.PI * 2); g.fillStyle = "#6f5426"; g.fill();
+      g.beginPath(); g.arc(24, 24, 22, 0, Math.PI * 2); g.fillStyle = grad; g.fill();
+      g.fillStyle = "#1d150a";
+      g.font = '700 30px "Noto Serif SC", "Songti SC", SimSun, serif';
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText("千", 24, 25);
+
+      // ICO = 6 字节文件头 + 16 字节目录项 + 原样的 PNG
+      const png = new Uint8Array(await (await new Promise((r) => c.toBlob(r, "image/png"))).arrayBuffer());
+      const head = new DataView(new ArrayBuffer(22));
+      head.setUint16(2, 1, true); head.setUint16(4, 1, true);
+      head.setUint8(6, 48); head.setUint8(7, 48);
+      head.setUint16(10, 1, true); head.setUint16(12, 32, true);
+      head.setUint32(14, png.length, true); head.setUint32(18, 22, true);
+      document.getElementById("dl").href = URL.createObjectURL(new Blob([head.buffer, png], { type: "image/x-icon" }));
+    })();
+  </script>
+</body>
+</html>

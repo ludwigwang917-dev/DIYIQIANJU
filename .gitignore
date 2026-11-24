@@ -1,0 +1,57 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+# wrangler local secrets (Phase 2 API keys go here, never in the repo)
+.dev.vars*
+
+# vercel
+.vercel
+
+# typescript
+next-env.d.ts
+*.tsbuildinfo
+/dist/
+/.wrangler/
+/outputs/
+/work/
+
+# generated single-file preview of app/components/ui (rebuild: sh design/preview/build.sh)
+/design/preview/preview.html
+
+# kept on this machine only, never in the public repo
+/docs/outreach-*.md
+/.claude/
+# internal project log, kept local (it summarises the outreach plan)
+/PROJECT_CONTEXT.md
+# root screenshots and scripts of unknown origin (PROJECT_CONTEXT U-2)
+/*_test.png
+/test_*.ps1

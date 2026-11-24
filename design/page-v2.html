@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概率余烬 · 整页布局稿 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+
+  * { box-sizing: border-box; }
+  :root {
+    --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --ink: #ece3cf;
+    --print: rgba(236, 222, 184, .6);
+    --gold: #c9a35c;
+  }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink);
+    font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 48%, rgba(255,220,160,.07), transparent 70%),
+      radial-gradient(ellipse 80% 60% at 50% 40%, #191a17 0%, #090a09 70%);
+  }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: center; padding: 16px 12px 6px; font-size: 12px; color: #9c9583; }
+  .controls div { display: flex; align-items: center; gap: 6px; }
+  .controls button { font: inherit; color: #cfc6b0; background: #1a1a17; border: 1px solid #3a372f; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+  .controls button.on { background: var(--gold); color: #1a140a; border-color: var(--gold); }
+
+  .viewport { width: 100%; max-width: 1200px; margin: 0 auto; padding: 10px 10px 20px; }
+  .stage-wrap { position: relative; width: 100%; }
+  .stage { position: absolute; left: 0; top: 0; width: 1120px; height: 730px; transform-origin: 0 0; }
+  .inner { position: absolute; left: 60px; top: 0; width: 1000px; height: 700px; }
+
+  /* ---------- 桌边 ---------- */
+  .rail {
+    position: absolute; left: 10px; top: 30px; width: 980px; height: 580px;
+    border-radius: 22px 22px 490px 490px / 22px 22px 440px 440px;
+    background: var(--rail-bg);
+    box-shadow: 0 50px 90px rgba(0,0,0,.8), 0 12px 26px rgba(0,0,0,.6),
+                inset 0 2px 1px rgba(255,255,255,.2), inset 0 -8px 14px rgba(0,0,0,.75), inset 0 0 0 1px rgba(0,0,0,.6);
+  }
+  .rail .grain { position: absolute; inset: 0; border-radius: inherit; opacity: var(--rail-grain); mix-blend-mode: overlay; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3' seed='11'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>"); }
+  .rail::before {
+    content: ""; position: absolute; inset: 3px; border-radius: inherit; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 22% at 50% 0%, rgba(255,240,210,.16), transparent 70%),
+      radial-gradient(ellipse 50% 14% at 50% 100%, rgba(255,240,210,.06), transparent 70%);
+  }
+  .rail::after {
+    content: ""; position: absolute; inset: 7px; pointer-events: none;
+    border-radius: 18px 18px 483px 483px / 18px 18px 433px 433px;
+    border: 1px dashed var(--stitch);
+  }
+  .stage[data-rail="leather"] { --rail-bg: linear-gradient(180deg, #3d2b1f 0%, #26190f 45%, #140d08 100%); --stitch: rgba(230,200,150,.3); --trim: linear-gradient(180deg, #b08a4a, #5a4120 60%, #3a2a14); --rail-grain: .35; }
+  .stage[data-rail="black"]   { --rail-bg: linear-gradient(180deg, #2b2a28 0%, #161514 50%, #090909 100%); --stitch: rgba(210,200,180,.2); --trim: linear-gradient(180deg, #9a9488, #3a3a3a 60%, #222); --rail-grain: .3; }
+  .stage[data-rail="walnut"]  { --rail-bg: repeating-linear-gradient(94deg, transparent 0 7px, rgba(0,0,0,.2) 7px 9px, rgba(255,220,170,.05) 9px 13px), linear-gradient(180deg, #6a4227 0%, #4a2c18 50%, #2c190c 100%); --stitch: transparent; --trim: linear-gradient(180deg, #d1ab62, #7d5d2a 60%, #4a3616); --rail-grain: .15; }
+
+  .trim {
+    position: absolute; left: 38px; top: 58px; width: 924px; height: 524px;
+    border-radius: 8px 8px 462px 462px / 8px 8px 412px 412px;
+    background: var(--trim); box-shadow: 0 0 0 1px rgba(0,0,0,.7);
+  }
+
+  /* ---------- 桌布 ---------- */
+  .felt {
+    position: absolute; left: 44px; top: 64px; width: 912px; height: 512px; overflow: hidden;
+    border-radius: 4px 4px 456px 456px / 4px 4px 406px 406px;
+    background-color: var(--felt);
+    box-shadow: inset 0 12px 24px rgba(0,0,0,.72), inset 0 0 80px rgba(0,0,0,.45);
+  }
+  .stage[data-felt="classic"] { --felt: #13603f; }
+  .stage[data-felt="deep"]    { --felt: #0f4433; }
+  .stage[data-felt="sage"]    { --felt: #31523f; }
+  .felt > div, .felt > svg { position: absolute; pointer-events: none; }
+  .felt .mottle { inset: 0; opacity: .8; mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='.009' numOctaves='4' seed='7'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23m)'/></svg>"); }
+  .felt .fiber { inset: 0; opacity: .95; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.25' numOctaves='2' stitchTiles='stitch' seed='3'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  .felt .fluff { inset: 0; opacity: .5; mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.9 2.4' numOctaves='1' stitchTiles='stitch' seed='19'/><feColorMatrix values='0 0 0 0 .8  0 0 0 0 .9  0 0 0 0 .8  1.4 0 0 0 -1.05'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>"); }
+  .felt .nap { inset: 0; mix-blend-mode: soft-light;
+    background: linear-gradient(115deg, rgba(255,255,255,.0) 20%, rgba(255,255,255,.12) 42%, rgba(255,255,255,0) 60%); }
+  .felt .wear { inset: 0; mix-blend-mode: screen; opacity: .9; }
+  .felt .light { inset: 0;
+    background:
+      radial-gradient(ellipse 44% 50% at 50% 34%, rgba(255, 232, 180, var(--lamp)), transparent 72%),
+      radial-gradient(ellipse 72% 82% at 50% 40%, transparent 48%, rgba(0,0,0,.62) 100%); }
+  .stage[data-light="on"]  { --lamp: .2; }
+  .stage[data-light="off"] { --lamp: 0; }
+  .felt svg.print { left: -44px; top: -64px; width: 1000px; height: 700px; }
+  .print text { fill: var(--print); font-family: var(--serif); }
+  .print .line { fill: none; stroke: var(--print); stroke-width: 1.3; }
+
+  /* ---------- 托盘 / 发牌靴 / 荷官 ---------- */
+  .tray { position: absolute; left: 352px; top: 64px; width: 296px; height: 46px; border-radius: 0 0 9px 9px;
+          background: linear-gradient(#030303, #1b1b1a); box-shadow: inset 0 7px 10px rgba(0,0,0,.95), 0 1px 0 rgba(255,255,255,.07), 0 0 0 2px #2a2015;
+          display: flex; gap: 3px; padding: 5px 10px 7px; }
+  .tray i { flex: 1; border-radius: 3px; box-shadow: inset 0 -4px 5px rgba(0,0,0,.55), inset 0 2px 2px rgba(255,255,255,.28), inset 2px 0 2px rgba(255,255,255,.1); }
+  .shoe { position: absolute; left: 808px; top: 90px; width: 78px; height: 100px; transform: rotate(-10deg);
+          background: linear-gradient(160deg, #2c2925, #0e0d0c); border-radius: 6px 6px 4px 20px;
+          box-shadow: 5px 12px 18px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 0 1px rgba(0,0,0,.6); }
+  .shoe::before { content: ""; position: absolute; left: 6px; right: 6px; top: 6px; height: 8px; border-radius: 2px; background: linear-gradient(#8f7442, #4d3a1c); }
+
+  .dealer { position: absolute; left: 500px; top: 4px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+            padding: 5px 16px 5px 5px; border-radius: 99px; background: linear-gradient(180deg, #1c1813, #0c0a08); border: 1px solid #7d6236;
+            box-shadow: 0 6px 14px rgba(0,0,0,.6); white-space: nowrap; }
+  .dealer b { font: 500 13px var(--serif); letter-spacing: .1em; display: block; }
+  .dealer small { font-size: 11px; color: #a99f88; }
+
+  /* ---------- 牌 ---------- */
+  .card {
+    position: absolute; width: var(--w); height: calc(var(--w) * 1.4); border-radius: calc(var(--w) * .075);
+    background: linear-gradient(165deg, #fffdf7 0%, #f6f1e5 55%, #ebe3d1 100%);
+    box-shadow: inset 0 0 0 1px rgba(60,40,10,.13), inset 0 1px 0 #fff,
+                0 1px 0 #d4ccb8, 0 2px 0 #c0b6a0, 0 3px 2px rgba(0,0,0,.35), 0 8px 12px rgba(0,0,0,.32), 0 16px 26px rgba(0,0,0,.16);
+    color: #1c1b1a; overflow: hidden;
+  }
+  .card.red { color: #b3261e; }
+  .card svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .card svg .rk { font-family: "Times New Roman", Georgia, serif; font-weight: 700; fill: currentColor; }
+  .card.back {
+    background:
+      radial-gradient(circle at 50% 50%, #ece2ca 0 17%, transparent 18%),
+      radial-gradient(circle at 50% 50%, #6c1b1f 0 22%, transparent 23%),
+      repeating-linear-gradient(45deg, transparent 0 3px, rgba(255,236,200,.18) 3px 4px),
+      repeating-linear-gradient(-45deg, transparent 0 3px, rgba(255,236,200,.18) 3px 4px),
+      #6c1b1f;
+    box-shadow: inset 0 0 0 calc(var(--w) * .07) #f2ead8, inset 0 0 0 calc(var(--w) * .085) #6c1b1f, 0 2px 0 #bdb39d, 0 6px 10px rgba(0,0,0,.35);
+  }
+  .card.back::after { content: "余"; position: absolute; inset: 0; display: grid; place-items: center; color: #6c1b1f; font: 700 calc(var(--w) * .2) var(--serif); }
+  .card.dim { filter: brightness(.8) saturate(.75); }
+  .card.niu { box-shadow: inset 0 0 0 1px rgba(60,40,10,.13), inset 0 1px 0 #fff, 0 0 0 1.5px rgba(216,179,106,.85),
+                0 1px 0 #d4ccb8, 0 2px 0 #c0b6a0, 0 3px 2px rgba(0,0,0,.35), 0 8px 12px rgba(0,0,0,.32); }
+
+  /* ---------- 筹码 ---------- */
+  .chip { position: absolute; width: 32px; height: 32px; border-radius: 50%;
+          background: repeating-conic-gradient(from 8deg, var(--c) 0 20deg, var(--edge) 20deg 30deg, var(--c) 30deg 45deg);
+          box-shadow: 0 1px 0 var(--side), 0 2px 0 var(--side), 0 3px 0 var(--side2), 0 4px 0 var(--side2); }
+  .chip::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--c);
+                  box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), inset 0 0 0 3px var(--c), inset 0 0 0 4px rgba(255,255,255,.18); }
+  .chip.top::after { content: attr(data-v); position: absolute; inset: 0; display: grid; place-items: center; font: 700 10px Georgia, serif; color: var(--txt); letter-spacing: -.02em; }
+  .chip-shadow { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,.55), transparent 70%); }
+
+  /* ---------- 铭牌 ---------- */
+  .plaque { position: absolute; display: flex; gap: 10px; align-items: center; min-width: 168px; padding: 8px 12px 8px 8px; border-radius: 8px; white-space: nowrap;
+            background: linear-gradient(180deg, #1d1914, #0c0a08); border: 1px solid #6e5631;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 16px rgba(0,0,0,.65); }
+  .plaque .info { flex: 1; min-width: 0; }
+  .plaque .row2 { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 3px; }
+  .plaque .total { font: 700 17px Georgia, serif; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .plaque .rt { display: flex; align-items: center; gap: 6px; }
+  .plaque .niu { font: 500 13px var(--serif); color: #e6dcc4; letter-spacing: .04em; }
+  .plaque .mult { font: 700 12px/18px Georgia, serif; padding: 0 7px; border-radius: 3px; font-variant-numeric: tabular-nums; }
+  .plaque .mult.w { color: #a9e6cc; background: rgba(127,207,174,.12); border: 1px solid rgba(127,207,174,.45); }
+  .plaque .mult.l { color: #f0a08c; background: rgba(226,122,98,.12); border: 1px solid rgba(226,122,98,.45); }
+  .plaque .mult.o { color: #a99f88; border: 1px solid rgba(236,222,184,.25); font: 500 11px/18px var(--serif); }
+  .av { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; position: relative;
+        font: 700 14px var(--serif); color: #2a1f10; background: radial-gradient(circle at 35% 30%, #efe2c4, #b9a37a 70%, #8a7452);
+        box-shadow: 0 0 0 2px #0c0a08, 0 0 0 3px var(--ring, #6e5631); }
+  .plaque .nm { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .plaque .nm b { font: 500 13px var(--serif); letter-spacing: .06em; }
+  .plaque .tag { font-size: 10px; padding: 1px 5px; border-radius: 3px; color: #cdbf9c; background: rgba(201,163,92,.14); border: 1px solid rgba(201,163,92,.3); }
+  .loss { color: #e27a62 !important; } .win { color: #7fcfae !important; }
+  .plaque.you { border-color: #d9b46a; box-shadow: 0 0 0 1px rgba(217,180,106,.35), 0 8px 16px rgba(0,0,0,.65); }
+  .plaque.you .av { --ring: #d9b46a; }
+  .plaque.won { box-shadow: 0 0 0 1px rgba(127,207,174,.35), 0 0 22px rgba(127,207,174,.12), 0 8px 16px rgba(0,0,0,.65); }
+  .plaque.out { filter: grayscale(1); opacity: .55; }
+  .plaque.out .av::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; border-radius: 50%;
+                           background: #ff9a4a; box-shadow: 0 0 8px 2px rgba(255,130,50,.7); }
+
+  .result { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 8px; padding: 3px 4px 3px 12px; border-radius: 99px; font-size: 12px; white-space: nowrap;
+            background: rgba(8,20,15,.8); border: 1px solid rgba(236,222,184,.35); color: #eadfc2; letter-spacing: .05em; }
+  .result em { font-style: normal; color: #a99f88; font-size: 11px; }
+  .result b { font: 700 12px var(--serif); padding: 2px 9px; border-radius: 99px; background: linear-gradient(180deg, #d8b36a, #9b7838); color: #1d150a; }
+  .ember { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffb469; box-shadow: 0 0 6px 2px rgba(255,120,40,.55); animation: rise 4s ease-in infinite; }
+  @keyframes rise { 0% { transform: translate(0,0); opacity: 0 } 15% { opacity: .9 } 100% { transform: translate(var(--dx), -46px); opacity: 0 } }
+  @media (prefers-reduced-motion: reduce) { .ember { animation: none; opacity: .6 } }
+
+  /* ---------- 牌面样张 ---------- */
+  .specimen { max-width: 1000px; margin: 6px auto 0; padding: 18px 16px 8px; border-top: 1px solid #2a2822; }
+  .specimen h3 { margin: 0 0 12px; font: 500 14px var(--serif); color: #cdbf9c; letter-spacing: .1em; }
+  .specimen .row { display: flex; flex-wrap: wrap; gap: 10px; padding: 18px; border-radius: 10px; background: #13603f; position: relative; overflow: hidden;
+                   box-shadow: inset 0 0 40px rgba(0,0,0,.5); }
+  .specimen .row .card { position: relative; flex: 0 0 auto; }
+  .note { max-width: 1000px; margin: 0 auto; padding: 16px 16px 40px; font-size: 12px; color: #8b8573; line-height: 1.9; }
+  .note b { color: #cdbf9c; font-weight: 500; }
+
+</style>
+<style>
+  /* ================= 整页 ================= */
+  :root {
+    --bg: #0b0b0a; --panel: #15120e; --panel-2: #1b1712; --line: #3e3020; --line-2: #5a4527;
+    --brass: #c9a35c; --brass-2: #8c6a32; --text: #ece3cf; --muted: #a99f88; --faint: #776f5f;
+    --win: #7fcfae; --lose: #e27a62;
+  }
+  html, body { background: var(--bg); }
+  body { margin: 0; color: var(--text); font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; overflow-x: hidden; }
+  .canvas-wrap { width: 100%; position: relative; }
+  .canvas { width: 1440px; transform-origin: 0 0; position: absolute; left: 0; top: 0;
+            background:
+              radial-gradient(ellipse 900px 600px at 560px 520px, rgba(255,220,160,.06), transparent 70%),
+              linear-gradient(#0d0d0c, #090908 40%, #0b0b0a); }
+  .serif { font-family: var(--serif); }
+  .num { font-family: Georgia, serif; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 11px; letter-spacing: .28em; color: var(--brass); }
+
+  /* 顶栏 */
+  .topbar { height: 64px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 40px; border-bottom: 1px solid #221c14; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .seal { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 17px var(--serif); color: #1d150a;
+          background: radial-gradient(circle at 35% 30%, #e6c886, #a8823f 70%, #6f5426); box-shadow: 0 0 0 1px #0b0b0a, 0 0 0 2px #6f5426; }
+  .brand b { font: 700 17px var(--serif); letter-spacing: .14em; display: block; }
+  .brand small { font-size: 11px; color: var(--faint); letter-spacing: .2em; }
+  .badge { font-size: 12px; color: #cfc4a8; padding: 6px 14px; border: 1px solid var(--line); border-radius: 99px; background: rgba(255,255,255,.02); }
+  .badge i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--win); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 3px rgba(127,207,174,.15); }
+  .nav { justify-self: end; display: flex; gap: 28px; font-size: 13px; color: var(--muted); }
+  .nav a { color: inherit; text-decoration: none; } .nav a.help { color: var(--brass); }
+
+  /* 标题 + 仪表条 */
+  .hero { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 40px; padding: 36px 40px 22px; }
+  .hero h1 { margin: 10px 0 8px; font: 700 38px/1.3 var(--serif); letter-spacing: .02em; }
+  .hero h1 em { font-style: normal; color: var(--brass); }
+  .hero p { margin: 0; font-size: 14px; color: var(--muted); }
+  .gauges { display: flex; border: 1px solid var(--line); border-radius: 10px; background: linear-gradient(180deg, #17130e, #0f0c09); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .gauges > div { padding: 12px 22px; border-right: 1px solid #2a2117; min-width: 128px; }
+  .gauges > div:last-child { border-right: 0; }
+  .gauges span { display: block; font-size: 11px; color: var(--faint); letter-spacing: .12em; }
+  .gauges b { display: block; margin-top: 6px; font: 400 22px Georgia, serif; font-variant-numeric: tabular-nums; }
+  .gauges b small { font: 12px var(--serif); color: var(--muted); margin-left: 3px; }
+  .gauges .link { display: grid; place-items: center; min-width: 0; padding: 0 20px; font-size: 13px; color: var(--brass); cursor: pointer; }
+
+  /* 主区 */
+  .main { display: grid; grid-template-columns: 1000px 1fr; gap: 24px; padding: 0 40px; }
+  .tablecol { min-width: 0; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; height: 40px; font-size: 13px; color: var(--muted); }
+  .live { display: flex; align-items: center; gap: 10px; }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--lose); box-shadow: 0 0 0 4px rgba(226,122,98,.15); }
+  .seg { display: flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 8px; background: #0f0c09; }
+  .seg button { font: 13px Georgia, serif; color: var(--muted); background: transparent; border: 0; border-radius: 5px; padding: 5px 14px; cursor: pointer; }
+  .seg button.on { background: var(--brass); color: #1d150a; }
+  .tablecol .viewport { max-width: none; padding: 0; margin: 0; }
+
+  /* 操作台 */
+  .console { display: grid; grid-template-columns: auto 1fr; gap: 18px; margin-top: 4px; }
+  .ctrl { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #17130e, #0f0c09); }
+  .btn { font: 500 14px var(--serif); letter-spacing: .08em; height: 44px; padding: 0 22px; border-radius: 8px; cursor: pointer; color: var(--text);
+         background: linear-gradient(180deg, #221c14, #15110c); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 6px rgba(0,0,0,.4); }
+  .btn.primary { color: #1d150a; border-color: #d9b46a; background: linear-gradient(180deg, #e0bd74, #a98239); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 4px 12px rgba(0,0,0,.5); font-weight: 700; min-width: 220px; }
+  .ctrl .row { display: flex; gap: 10px; } .ctrl .row .btn { flex: 1; }
+  .ctrl small { font-size: 11px; color: var(--faint); line-height: 1.6; max-width: 230px; }
+
+  .betpanel { position: relative; padding: 16px 20px; border: 1px solid #d9b46a; border-radius: 12px; background: linear-gradient(180deg, #1c1710, #110d09);
+              box-shadow: 0 0 0 1px rgba(217,180,106,.2), 0 10px 30px rgba(0,0,0,.5); display: grid; grid-template-columns: 1fr auto; gap: 14px 26px; }
+  .betpanel h3 { margin: 0; font: 700 15px var(--serif); letter-spacing: .08em; display: flex; align-items: center; gap: 10px; }
+  .betpanel h3 span { font: 400 12px "Microsoft YaHei", sans-serif; color: var(--muted); letter-spacing: 0; }
+  .timer { justify-self: end; font: 12px Georgia, serif; color: var(--brass); }
+  .slots { display: flex; gap: 14px; grid-column: 1; }
+  .slot { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px dashed rgba(236,222,184,.3); background: rgba(19,96,63,.25); }
+  .slot.active { border: 1px solid var(--brass); background: rgba(19,96,63,.4); box-shadow: inset 0 0 20px rgba(0,0,0,.35); }
+  .slot span { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+  .slot b { display: block; font: 400 26px Georgia, serif; margin-top: 2px; }
+  .slot small { font-size: 11px; color: var(--faint); }
+  .chips { grid-column: 2; grid-row: 2; display: flex; gap: 12px; align-items: center; }
+  .chipbtn { position: relative; width: 52px; height: 52px; border-radius: 50%; cursor: pointer; border: 0;
+             background: repeating-conic-gradient(from 8deg, var(--c) 0 20deg, var(--edge) 20deg 30deg, var(--c) 30deg 45deg);
+             box-shadow: 0 2px 0 var(--side), 0 4px 0 var(--side2), 0 8px 14px rgba(0,0,0,.5); }
+  .chipbtn::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.4); }
+  .chipbtn::after { content: attr(data-v); position: absolute; inset: 0; display: grid; place-items: center; font: 700 14px Georgia, serif; color: var(--txt); }
+  .chipbtn.off { opacity: .35; }
+  .betfoot { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid #2a2117; }
+  .betfoot p { margin: 0 auto 0 0; font-size: 12px; color: var(--faint); }
+  .betfoot .btn { height: 38px; padding: 0 18px; font-size: 13px; white-space: nowrap; flex: 0 0 auto; }
+  .betfoot .btn.primary { min-width: 140px; }
+
+  /* 证据面板 */
+  .evidence { display: flex; flex-direction: column; gap: 12px; padding-top: 40px; }
+  .pnl { border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #17130e, #0f0c09); padding: 16px 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+  .pnl-h { display: flex; justify-content: space-between; align-items: baseline; }
+  .pnl-h h2 { margin: 6px 0 0; font: 700 20px var(--serif); letter-spacing: .06em; }
+  .pnl-h .n { font: 12px Georgia, serif; color: var(--faint); }
+  .lbl { font-size: 12px; color: var(--muted); }
+  .big { font: 400 44px/1.1 Georgia, serif; font-variant-numeric: tabular-nums; margin: 8px 0 4px; }
+  .cap { font-size: 11px; color: var(--faint); line-height: 1.6; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .duo .pnl b { display: block; font: 400 26px Georgia, serif; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .legend i { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 5px; }
+  .zs { display: flex; align-items: center; gap: 12px; }
+  .zs .ok { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--win); border: 1px solid rgba(127,207,174,.5); font-size: 14px; }
+  .zs div { flex: 1; } .zs b { font: 600 13px var(--serif); color: var(--win); display: block; } .zs .num { font-size: 16px; color: var(--win); }
+  .bust { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid #2a2117; font-size: 13px; }
+  .bust:first-of-type { border-top: 0; }
+  .bust small { display: block; font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .bust b { font: 400 16px Georgia, serif; color: var(--brass); }
+
+  /* 座位设置弹层（示例：点老周的铭牌） */
+  .pop { position: absolute; width: 236px; padding: 14px; border-radius: 10px; background: linear-gradient(180deg, #1f1a13, #120e0a); border: 1px solid #8c6a32;
+         box-shadow: 0 18px 40px rgba(0,0,0,.7); font-size: 13px; z-index: 20; }
+  .pop::after { content: ""; position: absolute; left: 40px; bottom: -7px; width: 12px; height: 12px; transform: rotate(45deg); background: #130f0b; border-right: 1px solid #8c6a32; border-bottom: 1px solid #8c6a32; }
+  .pop h4 { margin: 0 0 10px; font: 700 14px var(--serif); display: flex; justify-content: space-between; }
+  .pop h4 span { font: 400 11px "Microsoft YaHei"; color: var(--faint); }
+  .pop .seg { margin-bottom: 10px; } .pop .seg button { flex: 1; font: 13px "Microsoft YaHei"; }
+  .pop ul { list-style: none; margin: 0 0 12px; padding: 0; border: 1px solid #2e2419; border-radius: 6px; max-height: 150px; overflow: hidden; }
+  .pop li { display: flex; justify-content: space-between; padding: 6px 10px; border-top: 1px solid #241c13; color: #d8ceb6; }
+  .pop li:first-child { border-top: 0; } .pop li small { color: var(--faint); font-size: 11px; }
+  .pop li.on { background: rgba(201,163,92,.14); color: var(--brass); }
+  .pop .row { display: flex; gap: 8px; } .pop .btn { flex: 1; height: 32px; padding: 0; font-size: 12px; }
+
+  /* 蒙特卡洛 */
+  .mc { margin: 56px 40px 0; display: grid; grid-template-columns: 520px 1fr; gap: 40px; padding: 40px; border: 1px solid var(--line); border-radius: 16px;
+        background: radial-gradient(ellipse at 80% 0%, rgba(201,163,92,.06), transparent 60%), linear-gradient(180deg, #141109, #0d0b08); }
+  .mc h2 { margin: 12px 0 14px; font: 700 32px/1.35 var(--serif); }
+  .mc p { font-size: 14px; line-height: 1.8; color: var(--muted); margin: 0 0 22px; }
+  .picker { display: flex; border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; }
+  .picker div { flex: 1; padding: 10px 16px; background: #0f0c09; }
+  .picker div span { font-size: 11px; color: var(--faint); display: block; }
+  .picker div b { font: 500 16px var(--serif); display: flex; justify-content: space-between; margin-top: 2px; }
+  .picker .btn { border-radius: 0; height: auto; border: 0; border-left: 1px solid var(--line-2); }
+  .strats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .strats span { font-size: 12px; padding: 4px 9px; border-radius: 99px; border: 1px solid #2e2419; color: var(--muted); }
+  .strats span.on { border-color: var(--brass); color: var(--brass); background: rgba(201,163,92,.1); }
+  .mcres { border: 1px solid #2e2419; border-radius: 12px; background: #0c0a07; padding: 24px 28px; }
+  .mcres .top2 { display: flex; justify-content: space-between; align-items: flex-end; }
+  .mcres .big { font-size: 64px; color: var(--lose); margin: 4px 0 0; }
+  .mcres .big i { font-size: 28px; font-style: normal; }
+  .hist { display: flex; align-items: flex-end; gap: 6px; height: 140px; margin-top: 22px; padding-bottom: 1px; border-bottom: 1px solid #3e3020; }
+  .hist i { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #d8b36a, #7a5c2a); opacity: .85; }
+  .hist i.surv { background: repeating-linear-gradient(45deg, #3a3326 0 4px, #2a251c 4px 8px); }
+  .axis { display: flex; justify-content: space-between; font: 11px Georgia, serif; color: var(--faint); margin-top: 6px; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 20px; background: #2a2117; border: 1px solid #2a2117; border-radius: 8px; overflow: hidden; }
+  .facts div { padding: 12px 14px; background: #100d09; font-size: 12px; color: var(--faint); }
+  .facts b { display: block; margin-top: 4px; font: 400 20px Georgia, serif; color: var(--text); }
+
+  /* 三条结论 */
+  .learn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 56px 40px 0; border-top: 1px solid #2a2117; }
+  .learn article { padding: 28px 32px 8px 0; }
+  .learn article + article { padding-left: 32px; border-left: 1px solid #2a2117; }
+  .learn span { font: 14px Georgia, serif; color: var(--brass); }
+  .learn h3 { margin: 14px 0 10px; font: 700 20px var(--serif); }
+  .learn p { margin: 0; font-size: 13px; line-height: 1.8; color: var(--muted); }
+
+  /* 页脚 */
+  .foot { margin: 56px 0 0; padding: 36px 40px 28px; border-top: 1px solid #2a2117; background: #080807; display: grid; grid-template-columns: 1fr auto; gap: 20px 40px; }
+  .foot strong { font: 700 20px var(--serif); }
+  .foot p { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+  .foot .links { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .foot .links a { color: var(--brass); font-size: 13px; text-decoration: none; border-bottom: 1px solid rgba(201,163,92,.35); padding-bottom: 2px; }
+  .foot small { grid-column: 1 / -1; font-size: 11px; color: #5c554a; padding-top: 16px; border-top: 1px solid #1d1913; }
+
+  /* v2：演示状态切换 + 上一局播报 */
+  .statebar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 12px; color: #9c9583; background: rgba(8,8,7,.92); border-bottom: 1px solid #221c14; }
+  .statebar button { font: inherit; color: #cfc6b0; background: #1a1a17; border: 1px solid #3a372f; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+  .statebar button.on { background: #c9a35c; color: #1a140a; border-color: #c9a35c; }
+  .statebar span { margin-left: auto; color: #5c554a; }
+  .canvas .s-auto, .canvas .s-bet, .canvas .s-seat { display: none; }
+  .canvas[data-state="auto"] .s-auto, .canvas[data-state="bet"] .s-bet, .canvas[data-state="seat"] .s-seat { display: inline; }
+  .canvas[data-state="auto"] .live i { animation: blink 1.4s infinite; }
+  .canvas:not([data-state="auto"]) .live i { background: #776f5f; box-shadow: none; }
+  @keyframes blink { 50% { opacity: .35 } }
+  .betpanel, .roundlog, .pop { display: none !important; }
+  .canvas[data-state="bet"] .betpanel { display: grid !important; }
+  .canvas:not([data-state="bet"]) .roundlog { display: block !important; }
+  .canvas[data-state="seat"] .pop { display: block !important; }
+  .roundlog { padding: 14px 20px 12px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #17130e, #0f0c09); }
+  .rl-h { display: flex; justify-content: space-between; align-items: baseline; }
+  .rl-h h3 { margin: 0; font: 700 15px var(--serif); letter-spacing: .06em; }
+  .rl-h span { font-size: 13px; color: var(--muted); }
+  .rl-h .win-d { font: 400 14px Georgia, serif; color: var(--brass); }
+  .roundlog ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+  .roundlog li { display: grid; grid-template-columns: 54px 70px 1fr auto; align-items: center; padding: 6px 0; border-top: 1px solid #241c13; font-size: 13px; }
+  .roundlog li .nm { font-family: var(--serif); }
+  .roundlog li .hd { color: #e6dcc4; font-family: var(--serif); }
+  .roundlog li .vs { font-size: 12px; color: var(--faint); }
+  .roundlog li b { font: 400 15px Georgia, serif; font-variant-numeric: tabular-nums; }
+  .roundlog li.hl .hd { color: #a9e6cc; }
+  .roundlog li.gone { opacity: .45; }
+  .roundlog p { margin: 8px 0 0; font-size: 11px; color: var(--faint); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="s-h" viewBox="0 0 100 100"><path d="M50 92 C22 70 3 52 3 31 C3 15 15 4 29 4 C39 4 46 10 50 19 C54 10 61 4 71 4 C85 4 97 15 97 31 C97 52 78 70 50 92Z"/></symbol>
+    <symbol id="s-d" viewBox="0 0 100 100"><path d="M50 2 C60 20 74 36 90 50 C74 64 60 80 50 98 C40 80 26 64 10 50 C26 36 40 20 50 2Z"/></symbol>
+    <symbol id="s-s" viewBox="0 0 100 100"><path d="M50 3 C64 24 97 40 97 62 C97 76 86 84 74 84 C64 84 57 79 54 72 C55 82 60 91 69 97 L31 97 C40 91 45 82 46 72 C43 79 36 84 26 84 C14 84 3 76 3 62 C3 40 36 24 50 3Z"/></symbol>
+    <symbol id="s-c" viewBox="0 0 100 100"><circle cx="50" cy="27" r="22"/><circle cx="25" cy="58" r="22"/><circle cx="75" cy="58" r="22"/><circle cx="50" cy="52" r="12"/><path d="M46 52 C46 76 41 88 31 97 L69 97 C59 88 54 76 54 52Z"/></symbol>
+    <pattern id="court-bg" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="5" height="5" fill="#f4e8c8"/><rect width="1.4" height="5" fill="#e2cd99"/>
+    </pattern>
+  </defs>
+</svg>
+<div class="statebar">演示状态 <button data-s="auto" class="on">自动运行中</button><button data-s="bet">轮到你下注</button><button data-s="seat">打开座位设置</button><span>设计稿按 1440 宽绘制，面板中等比缩小</span></div>
+<div class="canvas-wrap" id="cw">
+<div class="canvas" id="canvas" data-state="auto">
+
+  <header class="topbar">
+    <div class="brand"><span class="seal">余</span><span><b>概率余烬</b><small>斗牛长期性模拟实验室</small></span></div>
+    <div class="badge"><i></i>无真实货币 · 纯模拟 · 教育目的</div>
+    <nav class="nav"><a href="#">规则说明</a><a href="#">分析证据</a><a href="#" class="help">寻求帮助</a></nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">NIUNIU · LONG-RUN LAB</div>
+      <h1>再聪明的下注，<em>也改不了概率的方向。</em></h1>
+      <p>让五种策略同时入场。你看到的不是赢钱技巧，而是有限本金如何在重复下注中走向归零。</p>
+    </div>
+    <div class="gauges">
+      <div><span>营业时钟</span><b>03:42</b></div>
+      <div><span>已开局数</span><b>1,284<small>局</small></b></div>
+      <div><span>在座赌客</span><b>4<small>/ 5</small></b></div>
+      <div><span>庄家累计</span><b style="color:var(--brass)">+3,412</b></div>
+      <div class="link">全桌统计 ↗</div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="tablecol">
+      <div class="toolbar">
+        <div class="live"><i></i><span class="s-auto">自动模拟中 · 3×</span><span class="s-bet">已暂停 · 等你下注</span><span class="s-seat">已暂停 · 正在设置座位</span></div>
+        <div class="seg"><button>1×</button><button class="on">3×</button><button>8×</button></div>
+      </div>
+
+<div class="viewport">
+  <div class="stage-wrap" id="wrap">
+    <div class="stage" id="stage" data-felt="classic" data-rail="leather" data-light="on" data-cards="jumbo">
+      <div class="inner">
+        <div class="rail"><div class="grain"></div></div>
+        <div class="trim"></div>
+        <div class="felt">
+          <div class="mottle"></div>
+          <div class="fiber"></div>
+          <div class="fluff"></div>
+          <div class="nap"></div>
+          <div class="wear" id="wear"></div>
+          <svg class="print" id="print" viewBox="0 0 1000 700"></svg>
+          <div class="light"></div>
+        </div>
+        <div class="tray" id="tray"></div>
+        <div class="shoe"><div class="card back" style="--w:48px; position:absolute; left:13px; bottom:9px; height:30px"></div></div>
+        <div id="layer"></div>
+        <div class="dealer"><span class="av" style="--ring:#c9a35c">林</span><span><b>荷官 · 林姐</b><small>本班剩余 12 局 · 已发 1,284 局</small></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <div class="console">
+        <div class="ctrl">
+          <button class="btn primary"><span class="s-auto">Ⅱ　暂停模拟</span><span class="s-bet s-seat">▶　继续自动模拟</span></button>
+          <div class="row"><button class="btn">单步一局</button><button class="btn">重置实验</button></div>
+          <small>每局用完整 54 张牌重新洗牌。点击荷官可换人，点击铭牌可设置座位。</small>
+        </div>
+        <div class="roundlog">
+          <div class="rl-h"><h3>上一局 · 第 1,284 局</h3><span>庄 · 牛七 ×2　<b class="win-d">本局庄家 −2</b></span></div>
+          <ul>
+            <li><span class="nm">老周</span><span class="hd">牛五</span><span class="vs">输给庄家</span><b class="loss">−20</b></li>
+            <li class="hl"><span class="nm">阿杰</span><span class="hd">牛八 ×3</span><span class="vs">赢庄家</span><b class="win">+40</b></li>
+            <li><span class="nm">小陈</span><span class="hd">牛二</span><span class="vs">输给庄家</span><b class="loss">−8</b></li>
+            <li><span class="nm">你</span><span class="hd">牛五</span><span class="vs">输给庄家</span><b class="loss">−10</b></li>
+            <li class="gone"><span class="nm">豪客</span><span class="hd">—</span><span class="vs">第 217 局已离场</span><b>—</b></li>
+          </ul>
+          <p>四位玩家合计 +2，庄家 −2，零和。</p>
+        </div>
+        <div class="betpanel">
+          <h3>轮到你下注 <span>05 号座 · 手动 · 余额 455 点</span></h3>
+          <div class="timer">自动模拟已为你暂停</div>
+          <div class="slots">
+            <div class="slot active"><span>前注 · 按牌型倍数结算</span><b class="num">40</b><small>上限 50</small></div>
+            <div class="slot"><span>后注 · 恒为 ×1</span><b class="num">20</b><small>上限 100</small></div>
+          </div>
+          <div class="chips">
+            <button class="chipbtn" data-v="10" style="--c:#e6dcc4;--edge:#2a4a7a;--side:#b8ad94;--side2:#8f856f;--txt:#2a4a7a"></button>
+            <button class="chipbtn" data-v="50" style="--c:#7a1a1f;--edge:#efe6d2;--side:#561114;--side2:#3c0b0d;--txt:#f3e9d4"></button>
+            <button class="chipbtn" data-v="100" style="--c:#1b1b1b;--edge:#d8b36a;--side:#0d0d0d;--side2:#050505;--txt:#d8b36a"></button>
+            <button class="chipbtn off" data-v="500" style="--c:#17325a;--edge:#efe6d2;--side:#0f2240;--side2:#08162b;--txt:#f3e9d4"></button>
+          </div>
+          <div class="betfoot"><p>点筹码加到选中的注区。本局最多可能输 220 点（庄家牛牛时）。</p><button class="btn">清空</button><button class="btn">离席</button><button class="btn primary">确认下注</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="evidence">
+      <div class="pnl">
+        <div class="pnl-h"><div><div class="eyebrow">LIVE EVIDENCE</div><h2>证据面板</h2></div><span class="n">样本 n = 1,284</span></div>
+        <div style="margin-top:16px" class="lbl">玩家观测净收益率</div>
+        <div class="big num" style="color:var(--lose)">−4.31%</div>
+        <div class="cap">短期会波动，样本越大越稳定地落在负值。</div>
+      </div>
+      <div class="pnl">
+        <div class="pnl-h"><span class="lbl">资金随时间</span><span class="n">点 / 局</span></div>
+        <svg id="chart" viewBox="0 0 340 170" width="100%" style="display:block; margin-top:8px"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="duo">
+        <div class="pnl"><span class="lbl">已离场</span><b>1<small class="serif" style="font-size:13px;color:var(--muted)"> 人</small></b><div class="cap">豪客 · 第 217 局</div></div>
+        <div class="pnl"><span class="lbl">庄家累计</span><b style="color:var(--brass)">+3,412</b><div class="cap">来自“同牌型庄家胜”</div></div>
+      </div>
+      <div class="pnl zs"><span class="ok">✓</span><div><b>零和校验通过</b><span class="cap">庄家盈亏 + 全部玩家盈亏</span></div><span class="num">0.00</span></div>
+      <div class="pnl">
+        <span class="lbl">多久输光？</span>
+        <div style="margin-top:8px">
+          <div class="bust"><span>豪客<small>豪客策略 · 峰值 1,480</small></span><b>217 局</b></div>
+        </div>
+        <div class="cap">其余 4 位仍在座。继续运行，名单会变长。</div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="mc">
+    <div>
+      <div class="eyebrow">REPEAT THE EXPERIMENT</div>
+      <h2>一次好运不是证据，<br>一千次重复才接近答案。</h2>
+      <p>同样的本金、同样的策略，在后台独立重开 1,000 张桌子，每张最多打 1,000 局。牌桌这边可以继续玩。</p>
+      <div class="picker">
+        <div><span>实验策略</span><b>马丁格尔 <em style="font-style:normal;color:var(--faint);font-size:12px">输了加倍，赢了回到底注</em></b></div>
+        <button class="btn primary" style="min-width:180px">运行 1,000 次</button>
+      </div>
+      <div class="strats"><span>平注</span><span class="on">马丁格尔</span><span>达朗贝尔</span><span>凯利</span><span>保守</span><span>激进</span><span>豪客</span><span>偏前</span><span>偏后</span><span>灵活观察</span></div>
+    </div>
+    <div class="mcres">
+      <div class="top2">
+        <div><span class="lbl">1,000 局内输光的概率</span><div class="big num">63.4<i>%</i></div></div>
+        <span class="cap" style="text-align:right">马丁格尔 · 本金 1,000<br>1,000 次独立实验</span>
+      </div>
+      <div class="hist" id="hist"></div>
+      <div class="axis"><span>第 0 局</span><span>破产发生在第几局</span><span>1,000 局</span></div>
+      <div class="facts">
+        <div>中位破产局数<b>412 局</b></div>
+        <div>撑满 1,000 局<b>366 / 1,000</b></div>
+        <div>平均期末本金<b>571 点</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="learn">
+    <article><span>01</span><h3>策略改变波动，不改变期望</h3><p>翻倍、线性加注、按本金下注，都只是在重排赢和输出现的顺序。</p></article>
+    <article><span>02</span><h3>有限本金扛不住无限重复</h3><p>哪怕单局只差一点点，连续输下去，先离场的总是本金有限的一方。</p></article>
+    <article><span>03</span><h3>短期赢钱不等于方法有效</h3><p>随机过程一定会产生“赢家”。判断一个策略，要看大量独立重复的结果。</p></article>
+  </section>
+
+  <footer class="foot" id="help">
+    <div><strong>如果赌博已经影响你的生活</strong><p>模拟不能替代专业支持。停止下注，和可信赖的人谈谈，并尽快寻找当地帮助。</p></div>
+    <div class="links"><a href="#">WHO 赌博危害说明 ↗</a><a href="#">匿名戒赌会线上互助 ↗</a></div>
+    <small>本页所有“点数”均为虚拟统计单位，不可购买、提现或兑换。模拟结果不构成博彩建议。</small>
+  </footer>
+</div>
+</div>
+<div hidden><div id="spec"></div><div id="plaques"></div></div>
+
+<script>
+
+  const stage = document.getElementById('stage');
+  const wrap = document.getElementById('wrap');
+  function fit() { const s = wrap.clientWidth / 1120; stage.style.transform = `scale(${s})`; wrap.style.height = (730 * s) + 'px'; }
+  addEventListener('resize', fit); fit();
+  document.querySelectorAll('.controls button').forEach(b => b.addEventListener('click', () => {
+    stage.dataset[b.dataset.k] = b.dataset.v;
+    document.querySelectorAll(`.controls button[data-k="${b.dataset.k}"]`).forEach(x => x.classList.toggle('on', x === b));
+    if (b.dataset.k === 'cards') render();
+  }));
+
+  const CX = 500, CY = 170;
+  const rad = d => d * Math.PI / 180;
+  const pt = (rx, ry, deg) => [CX + rx * Math.sin(rad(deg)), CY + ry * Math.cos(rad(deg))];
+  const arc = (rx, ry, deg) => { const a = pt(rx, ry, -deg), b = pt(rx, ry, deg); return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} A${rx} ${ry} 0 0 0 ${b[0].toFixed(1)} ${b[1].toFixed(1)}`; };
+  const ANG = [-56, -28, 0, 28, 56];
+  const BOX = [392, 338], HAND = [296, 252], PLAQ = [520, 478];
+
+  // 磨损
+  let wear = [`radial-gradient(ellipse 210px 70px at 456px 105px, rgba(200,230,210,.07), transparent 70%)`];
+  ANG.forEach(a => { const [x, y] = pt(...BOX, a); wear.push(`radial-gradient(ellipse 80px 60px at ${(x - 44).toFixed(0)}px ${(y - 64).toFixed(0)}px, rgba(200,230,210,.06), transparent 70%)`); });
+  document.getElementById('wear').style.background = wear.join(',');
+
+  // 桌面印刷
+  let svg = `<defs><path id="t1" d="${arc(238, 200, 84)}"/></defs>`;
+  svg += `<path class="line" d="${arc(440, 392, 84)}" opacity=".5"/>`;
+  svg += `<path class="line" d="${arc(436, 388, 84)}" opacity=".25"/>`;
+  svg += `<path class="line" d="${arc(342, 292, 76)}"/>`;
+  svg += `<text font-size="12" letter-spacing="1.5"><textPath href="#t1" startOffset="50%" text-anchor="middle">牛牛 ×5 · 牛九 ×4 · 牛八 ×3 · 牛七 ×2 · 同牌型庄家胜</textPath></text>`;
+  svg += `<g opacity=".55"><line x1="410" y1="262" x2="590" y2="262" class="line" opacity=".5"/>
+    <text x="500" y="290" text-anchor="middle" font-size="28" font-weight="700" letter-spacing="10">概率余烬</text>
+    <text x="500" y="309" text-anchor="middle" font-size="10" letter-spacing="4">虚拟点数 · 不可兑换 · 纯概率模拟</text></g>`;
+  ANG.forEach((a, i) => {
+    const [x, y] = pt(...BOX, a);
+    svg += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${-a})">
+      <rect x="-50" y="-29" width="100" height="58" rx="10" class="line"/>
+      <rect x="-46" y="-25" width="92" height="50" rx="7" class="line" opacity=".3"/>
+      <line x1="0" y1="-21" x2="0" y2="21" class="line" opacity=".45"/>
+      <text x="-24" y="20" text-anchor="middle" font-size="9" letter-spacing="2">前注</text>
+      <text x="24" y="20" text-anchor="middle" font-size="9" letter-spacing="2">后注</text>
+      <text x="0" y="-36" text-anchor="middle" font-size="11" letter-spacing="2" opacity=".8">0${i + 1}</text></g>`;
+  });
+  document.getElementById('print').innerHTML = svg;
+
+  // 托盘
+  const trayColors = ['#6e171b','#6e171b','#6e171b','#191919','#191919','#16304f','#16304f','#e3dac4','#e3dac4','#e3dac4','#4a2a5c','#25472f'];
+  document.getElementById('tray').innerHTML = trayColors.map(c =>
+    `<i style="background: repeating-linear-gradient(180deg, ${c} 0 2.5px, rgba(0,0,0,.4) 2.5px 3.5px), ${c}"></i>`).join('');
+
+  // ---------- 牌面（矢量） ----------
+  const SUIT = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+  const isRed = s => s === '♥' || s === '♦';
+  const L = 31, C = 50, R = 69;
+  const PIPS = {
+    '2': [[C,25],[C,115]],
+    '3': [[C,25],[C,70],[C,115]],
+    '4': [[L,25],[R,25],[L,115],[R,115]],
+    '5': [[L,25],[R,25],[C,70],[L,115],[R,115]],
+    '6': [[L,25],[R,25],[L,70],[R,70],[L,115],[R,115]],
+    '7': [[L,25],[R,25],[C,47.5],[L,70],[R,70],[L,115],[R,115]],
+    '8': [[L,25],[R,25],[C,47.5],[L,70],[R,70],[C,92.5],[L,115],[R,115]],
+    '9': [[L,25],[R,25],[L,55],[R,55],[C,70],[L,85],[R,85],[L,115],[R,115]],
+    '10': [[L,25],[R,25],[C,40],[L,55],[R,55],[L,85],[R,85],[C,100],[L,115],[R,115]],
+  };
+  const use = (id, x, y, sz, flip) =>
+    `<use href="#s-${id}" x="${x - sz / 2}" y="${y - sz / 2}" width="${sz}" height="${sz}" fill="currentColor"${flip ? ` transform="rotate(180 ${x} ${y})"` : ''}/>`;
+  const ORN = {
+    K: '<path d="M38 33 L37 22 L43.5 27.5 L50 19 L56.5 27.5 L63 22 L62 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/><circle cx="50" cy="19" r="1.8" fill="currentColor"/>',
+    Q: '<path d="M39 33 Q50 18 61 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/><circle cx="44" cy="27" r="1.4" fill="currentColor"/><circle cx="50" cy="24" r="1.6" fill="currentColor"/><circle cx="56" cy="27" r="1.4" fill="currentColor"/>',
+    J: '<path d="M44 33 C44 26 50 20 58 19 C54 23 53 28 56 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/>',
+  };
+
+  function faceSVG(r, s, style) {
+    const id = SUIT[s];
+    const ten = r === '10';
+    let g = '';
+    if (style === 'jumbo') {
+      const court = ['J','Q','K'].includes(r);
+      g += `<rect x="4" y="4" width="92" height="132" rx="5" fill="none" stroke="${court ? '#c9a35c' : 'currentColor'}" stroke-width="${court ? 1.2 : .8}" opacity="${court ? 1 : .14}"/>`;
+      g += `<text class="rk" x="${ten ? 5 : 9}" y="44" font-size="${ten ? 36 : 44}" letter-spacing="${ten ? -4 : 0}">${r}</text>`;
+      g += use(id, 21, 60, 17);
+      if (court) {
+        g += `<rect x="42" y="64" width="50" height="68" rx="3" fill="url(#court-bg)" stroke="currentColor" stroke-width="1"/>`;
+        g += `<rect x="45" y="67" width="44" height="62" rx="2" fill="none" stroke="#c9a35c" stroke-width=".9"/>`;
+        g += `<g transform="translate(17 57)">${ORN[r]}</g>`;
+        g += use(id, 67, 108, 24);
+      } else if (r === 'A') {
+        g += `<circle cx="66" cy="102" r="27" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/>`;
+        g += use(id, 66, 102, 40);
+      } else {
+        g += use(id, 68, 104, 46);
+      }
+      return `<svg viewBox="0 0 100 140">${g}</svg>`;
+    }
+    const idx = `<text class="rk" x="12" y="20" text-anchor="middle" font-size="${ten ? 14 : 17}" letter-spacing="${ten ? -1.5 : 0}">${r}</text>${use(id, 12, 29, 10)}`;
+    g += idx + `<g transform="rotate(180 50 70)">${idx}</g>`;
+    if (PIPS[r]) {
+      PIPS[r].forEach(([x, y]) => { g += use(id, x, y, 17, y > 70); });
+    } else if (r === 'A') {
+      g += `<circle cx="50" cy="70" r="27" fill="none" stroke="currentColor" stroke-width=".7" opacity=".35"/>`;
+      g += use(id, 50, 70, s === '♠' ? 40 : 34);
+    } else {
+      const half = `${ORN[r]}<text class="rk" x="50" y="57" text-anchor="middle" font-size="24" style="font-family: var(--serif)">${r}</text>`;
+      g += `<rect x="21" y="15" width="58" height="110" rx="2" fill="url(#court-bg)" stroke="currentColor" stroke-width="1"/>`;
+      g += `<rect x="24" y="18" width="52" height="104" rx="1" fill="none" stroke="#c9a35c" stroke-width=".9"/>`;
+      g += half + `<g transform="rotate(180 50 70)">${half}</g>`;
+      g += `<line x1="24" y1="70" x2="76" y2="70" stroke="currentColor" stroke-width=".6" opacity=".5"/>`;
+      g += `<path d="M50 65 L54 70 L50 75 L46 70Z" fill="#c9a35c" stroke="currentColor" stroke-width=".5"/>`;
+      g += use(id, 32, 28, 9) + `<g transform="rotate(180 50 70)">${use(id, 32, 28, 9)}</g>`;
+    }
+    return `<svg viewBox="0 0 100 140">${g}</svg>`;
+  }
+  const cardStyle = () => stage.dataset.cards;
+  function card(r, s, w, x, y, rot, extra = '') {
+    return `<div class="card ${isRed(s) ? 'red' : ''} ${extra}" style="--w:${w}px; left:${x}px; top:${y}px; transform: translate(-50%,-50%) rotate(${rot}deg)">${faceSVG(r, s, cardStyle())}</div>`;
+  }
+  const back = (w, x, y, rot) => `<div class="card back" style="--w:${w}px; left:${x}px; top:${y}px; transform: translate(-50%,-50%) rotate(${rot}deg)"></div>`;
+
+  // 筹码
+  const CHIP = {
+    10:  { c: '#e6dcc4', edge: '#2a4a7a', side: '#b8ad94', side2: '#8f856f', txt: '#2a4a7a' },
+    50:  { c: '#7a1a1f', edge: '#efe6d2', side: '#561114', side2: '#3c0b0d', txt: '#f3e9d4' },
+    100: { c: '#1b1b1b', edge: '#d8b36a', side: '#0d0d0d', side2: '#050505', txt: '#d8b36a' },
+    500: { c: '#17325a', edge: '#efe6d2', side: '#0f2240', side2: '#08162b', txt: '#f3e9d4' },
+  };
+  function stack(v, x, y, n) {
+    const k = CHIP[v];
+    let h = `<div class="chip-shadow" style="left:${x - 18}px; top:${y - 14}px"></div>`;
+    for (let i = 0; i < n; i++) {
+      h += `<div class="chip ${i === n - 1 ? 'top' : ''}" data-v="${v}" style="--c:${k.c}; --edge:${k.edge}; --side:${k.side}; --side2:${k.side2}; --txt:${k.txt}; left:${x - 16}px; top:${y - 16 - i * 4}px"></div>`;
+    }
+    return h;
+  }
+
+  // 前三张 = 凑整的“牛”，后两张 = 算点
+  const DEALER = { hand: [['K','♠'],['7','♥'],['3','♣'],['2','♦'],['5','♥']], label: '牛七', mult: '×2', calc: 'K+7+3=20 · 2+5=7' };
+  const seats = [
+    { name: '老周', av: '周', tag: '平注', bank: 812, peak: 1040, hn: '牛五', cls: 'loss', hist: [10,-10,-20,10,-10,-10,20,-10,-20,10,-10,-20], hand: [['2','♠'],['8','♥'],['K','♣'],['5','♠'],['Q','♦']], bet: [[10, 2], [10, 1]] },
+    { name: '阿杰', av: '杰', tag: '马丁格尔', bank: 1066, peak: 1180, hn: '牛八 ×3', cls: 'win', won: true, hist: [-10,-20,-40,80,10,-10,-20,-40,-80,160,-10,40], hand: [['A','♥'],['9','♠'],['J','♣'],['4','♦'],['4','♠']], bet: [[50, 3], [100, 1]] },
+    { name: '豪客', av: '豪', tag: '豪客', bank: 0, peak: 1480, hn: '破产', cls: '', out: true, bustAt: 217, hist: [200,-200,-200,400,-300,-200,-200,-100] },
+    { name: '小陈', av: '陈', tag: '凯利', bank: 744, peak: 1012, hn: '牛二', cls: 'loss', hist: [8,-8,-8,8,-8,8,-8,-8,16,-8,-8,-8], hand: [['3','♣'],['7','♠'],['K','♥'],['10','♣'],['2','♦']], bet: [[10, 1], [10, 1]] },
+    { name: '你', av: '你', tag: '手动', bank: 455, peak: 1120, hn: '牛五', cls: 'loss', you: true, hist: [10,10,-20,-10,50,-50,-10,10,-10,-50,-10,-10], hand: [['5','♦'],['Q','♣'],['5','♠'],['9','♥'],['6','♣']], bet: [[10, 1], [50, 1]] },
+  ];
+  const START = 1000;
+  const fmtD = d => (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d).toLocaleString();
+  const MULT = { '老周': ['×2', 'l'], '阿杰': ['×3', 'w'], '小陈': ['×2', 'l'], '你': ['×2', 'l'] };
+
+  // 铭牌只保留：头像、姓名、策略、总输赢（相对起始本金）、本局倍数
+  function plaque(s) {
+    const net = s.bank - START;
+    const [m, k] = s.out ? ['离席', 'o'] : MULT[s.name];
+    return `
+      <span class="av">${s.av}</span>
+      <span class="info">
+        <span class="nm"><b>${s.name}</b><span class="tag">${s.tag}</span></span>
+        <span class="row2"><span class="total ${net > 0 ? 'win' : net < 0 ? 'loss' : ''}">${fmtD(net)}</span><span class="rt">${s.out ? '' : `<span class="niu">${s.hn.split(' ')[0]}</span>`}<span class="mult ${k}">${m}</span></span></span>
+      </span>`;
+  }
+
+  function render() {
+    let html = '';
+    const dx = [-136, -70, -4, 76, 140];
+    DEALER.hand.forEach(([r, s], i) => { html += card(r, s, 58, 500 + dx[i], 168, 0, i < 3 ? 'niu' : ''); });
+    html += `<div class="result" style="left:500px; top:236px"><em>${DEALER.calc}</em><b>庄 · ${DEALER.label} ${DEALER.mult}</b></div>`;
+    for (let i = 0; i < 4; i++) html += back(44, 172 + i * 1.5, 132 - i * 2, 6 + i * 3);
+
+    seats.forEach((s, i) => {
+      const a = ANG[i];
+      const [px, py] = pt(...PLAQ, a);
+      html += `<div class="plaque ${s.you ? 'you' : ''} ${s.out ? 'out' : ''} ${s.won ? 'won' : ''}" style="left:${px}px; top:${py}px; transform: translate(-50%,-50%)">${plaque(s)}</div>`;
+      const [bx, by] = pt(...BOX, a);
+      if (s.out) {
+        for (let e = 0; e < 6; e++) {
+          const ex = bx - 26 + e * 10, ey = by + 4 - (e % 2) * 6;
+          html += `<span class="ember" style="left:${ex}px; top:${ey}px; --dx:${(e - 3) * 4}px; animation-delay:${e * .65}s"></span>`;
+        }
+        html += `<div style="position:absolute; left:${bx - 34}px; top:${by - 12}px; width:68px; height:26px; border-radius:50%; background: radial-gradient(rgba(40,40,36,.55), transparent 70%)"></div>`;
+        return;
+      }
+      const [cx, cy] = pt(...HAND, a);
+      const offs = [-42, -23, -4, 19, 38];
+      s.hand.forEach(([r, suit], k) => {
+        const off = offs[k];
+        const x = cx + off * Math.cos(rad(a)), y = cy - off * Math.sin(rad(a)) + Math.abs(k - 2) * 2;
+        html += card(r, suit, 46, x, y, -a + (k - 2) * 4, (s.cls === 'loss' ? 'dim ' : '') + (k < 3 ? 'niu' : ''));
+      });
+      s.bet.forEach(([v, n], k) => {
+        const off = k === 0 ? -24 : 24;
+        html += stack(v, bx + off * Math.cos(rad(a)), by - off * Math.sin(rad(a)) + 2, n);
+      });
+    });
+    document.getElementById('layer').innerHTML = html;
+    document.getElementById('plaques').innerHTML = seats.map(s => `<div class="plaque ${s.you ? 'you' : ''} ${s.out ? 'out' : ''} ${s.won ? 'won' : ''}" style="position:relative">${plaque(s)}</div>`).join('');
+
+    // 样张
+    const spec = [['A','♠'],['2','♥'],['3','♣'],['4','♦'],['5','♠'],['6','♥'],['7','♣'],['8','♦'],['9','♠'],['10','♥'],['J','♣'],['Q','♦'],['K','♠']];
+    document.getElementById('spec').innerHTML = spec.map(([r, s]) =>
+      `<div class="card ${isRed(s) ? 'red' : ''}" style="--w:66px">${faceSVG(r, s, cardStyle())}</div>`).join('');
+  }
+  render();
+
+</script>
+<script>
+  // 整页按 1440 宽等比缩放
+  const canvas = document.getElementById('canvas'), cw = document.getElementById('cw');
+  function fitPage() {
+    const s = Math.min(1, cw.clientWidth / 1440);
+    canvas.style.transform = `scale(${s})`;
+    fit();
+    cw.style.height = canvas.offsetHeight * s + 'px';
+  }
+  addEventListener('resize', fitPage); setTimeout(fitPage, 0); fitPage();
+
+  // 座位设置弹层示例（锚在 01 号老周的铭牌上）
+  (function () {
+    const [px, py] = pt(...PLAQ, ANG[0]);
+    document.getElementById('layer').insertAdjacentHTML('beforeend', `
+      <div class="pop" style="left:${px - 60}px; top:${py - 268}px">
+        <h4>01 · 老周 <span>点击铭牌打开</span></h4>
+        <div class="seg"><button class="on">托管</button><button>手动</button></div>
+        <ul><li class="on">平注 <small>每局固定</small></li><li>马丁格尔 <small>输了加倍</small></li><li>达朗贝尔 <small>输加赢减</small></li><li>凯利 <small>按本金比例</small></li><li>保守 <small>小注慢磨</small></li></ul>
+        <div class="row"><button class="btn">换一位赌客</button><button class="btn">请离席</button></div>
+      </div>`);
+  })();
+
+  // 资金曲线（示意数据：终点与铭牌一致）
+  (function () {
+    let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const N = 64, R = 1284, W = 340, H = 170, top = 10, bot = 150, maxV = 1600;
+    const y = v => bot - (v / maxV) * (bot - top);
+    const x = i => 28 + (i / (N - 1)) * (W - 34);
+    const series = [
+      { name: '老周', end: 812, col: '#cfc4a8', vol: 18 },
+      { name: '阿杰', end: 1066, col: '#7fcfae', vol: 60 },
+      { name: '豪客', end: 0, col: '#e27a62', vol: 90, bust: 217 },
+      { name: '小陈', end: 744, col: '#8fa7c7', vol: 14 },
+      { name: '你', end: 455, col: '#d9b46a', vol: 34, you: true },
+    ];
+    let g = '';
+    [0, 500, 1000, 1500].forEach(v => {
+      g += `<line x1="28" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 1000 ? 'rgba(236,222,184,.35)' : 'rgba(236,222,184,.08)'}" ${v === 1000 ? 'stroke-dasharray="3 3"' : ''}/>`;
+      g += `<text x="22" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#776f5f" font-family="Georgia">${v}</text>`;
+    });
+    g += `<text x="${W - 6}" y="${y(1000) - 4}" text-anchor="end" font-size="9" fill="#a99f88">起始本金</text>`;
+    series.forEach(s => {
+      const n = s.bust ? Math.round(s.bust / R * (N - 1)) : N - 1;
+      let v = 1000; const w = [1000];
+      for (let i = 1; i <= n; i++) { v += (rnd() - .5) * s.vol * 2; w.push(v); }
+      const pts = w.map((val, i) => { const adj = val + (s.end - w[n]) * (i / n); return [x(i), y(Math.max(0, Math.min(maxV, adj)))]; });
+      g += `<polyline points="${pts.map(p => p.map(c => c.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${s.col}" stroke-width="${s.you ? 2 : 1.3}" opacity="${s.you ? 1 : .8}" stroke-linejoin="round"/>`;
+      if (s.bust) { const [bx, by] = pts[pts.length - 1]; g += `<circle cx="${bx}" cy="${by}" r="3" fill="#ff9a4a"/><circle cx="${bx}" cy="${by}" r="7" fill="rgba(255,140,60,.25)"/>`; }
+    });
+    g += `<text x="28" y="166" font-size="9" fill="#776f5f" font-family="Georgia">0</text><text x="${W - 6}" y="166" text-anchor="end" font-size="9" fill="#776f5f" font-family="Georgia">1,284 局</text>`;
+    document.getElementById('chart').innerHTML = g;
+    document.getElementById('legend').innerHTML = series.map(s => `<span><i style="background:${s.col}"></i>${s.name}</span>`).join('');
+  })();
+
+  // 蒙特卡洛直方图（示意）
+  document.getElementById('hist').innerHTML =
+    [14, 46, 88, 104, 92, 78, 64, 52, 41, 33].map(v => `<i style="height:${v / 104 * 100}%" title="${v} 次"></i>`).join('') +
+    `<i class="surv" style="height:${366 / 1000 * 100 * 1.6}%" title="撑满 1,000 局：366 次"></i>`;
+
+  document.querySelectorAll('.statebar button').forEach(b => b.addEventListener('click', () => {
+    canvas.dataset.state = b.dataset.s;
+    document.querySelectorAll('.statebar button').forEach(x => x.classList.toggle('on', x === b));
+    fitPage();
+  }));
+</script>
+</body>
+</html>
+
+
+

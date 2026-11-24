@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概率余烬 · 手机竖屏稿 v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --bg: #0b0b0a; --line: #3e3020; --line-2: #5a4527; --brass: #c9a35c;
+    --text: #ece3cf; --muted: #a99f88; --faint: #776f5f; --win: #7fcfae; --lose: #e27a62;
+    --print: rgba(236, 222, 184, .6);
+  }
+  body { margin: 0; background: #1a1a18; color: var(--text); font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+  .intro { max-width: 1700px; margin: 0 auto; padding: 20px 24px 0; font-size: 13px; color: #9c9583; line-height: 1.8; }
+  .intro b { color: #e6dcc4; font-weight: 500; }
+  .frames { display: flex; flex-wrap: wrap; gap: 36px 28px; justify-content: center; padding: 24px 16px 60px; }
+  .frame { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .frame > h3 { margin: 0; font: 500 14px var(--serif); color: #cdbf9c; letter-spacing: .08em; }
+  .phone { position: relative; width: 410px; height: 864px; padding: 10px; border-radius: 54px; background: #050505;
+           box-shadow: 0 0 0 2px #2a2a28, 0 30px 60px rgba(0,0,0,.6); }
+  .screen { position: relative; width: 390px; height: 844px; border-radius: 44px; overflow: hidden; background: var(--bg); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 34px; border-radius: 20px; background: #000; z-index: 40; }
+  .sysbar { height: 48px; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 0; font: 600 14px -apple-system, "Segoe UI", sans-serif; color: #f2f2f2; }
+  .serif { font-family: var(--serif); }
+  .num { font-family: Georgia, serif; font-variant-numeric: tabular-nums; }
+  .win { color: var(--win) !important; } .loss { color: var(--lose) !important; }
+
+  /* 顶栏 */
+  .m-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 10px; }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .seal { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 700 14px var(--serif); color: #1d150a;
+          background: radial-gradient(circle at 35% 30%, #e6c886, #a8823f 70%, #6f5426); box-shadow: 0 0 0 1px #0b0b0a, 0 0 0 2px #6f5426; }
+  .brand b { font: 700 16px var(--serif); letter-spacing: .12em; }
+  .m-top nav { display: flex; gap: 16px; font-size: 13px; color: var(--muted); }
+  .m-top nav .help { color: var(--brass); }
+  .m-badge { margin: 0 16px; padding: 6px 0; text-align: center; font-size: 11px; color: #cfc4a8; border-top: 1px solid #221c14; border-bottom: 1px solid #221c14; }
+  .m-badge i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--win); margin-right: 6px; vertical-align: 1px; }
+  .m-hero { padding: 16px 16px 12px; }
+  .m-hero h1 { margin: 0; font: 700 22px/1.4 var(--serif); }
+  .m-hero h1 em { font-style: normal; color: var(--brass); }
+  .gauges { display: grid; grid-template-columns: 1fr 1fr 1fr auto; margin: 12px 16px 0; border: 1px solid var(--line); border-radius: 10px; background: linear-gradient(180deg, #17130e, #0f0c09); }
+  .gauges div { padding: 8px 10px; border-right: 1px solid #2a2117; }
+  .gauges span { display: block; font-size: 11px; color: var(--faint); }
+  .gauges b { display: block; margin-top: 2px; font: 400 17px Georgia, serif; }
+  .gauges .lk { display: grid; place-items: center; border-right: 0; font-size: 12px; color: var(--brass); }
+  .status { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 8px; font-size: 12px; color: var(--muted); }
+  .status .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--lose); margin-right: 7px; box-shadow: 0 0 0 3px rgba(226,122,98,.15); }
+  .status .dot.off { background: #776f5f; box-shadow: none; }
+
+  /* ---------- 竖向牌桌 ---------- */
+  .mtable { position: relative; margin: 0 10px; padding: 11px; border-radius: 190px 190px 26px 26px / 110px 110px 26px 26px;
+            background: linear-gradient(180deg, #3d2b1f 0%, #26190f 45%, #140d08 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,.7), inset 0 2px 1px rgba(255,255,255,.18), inset 0 -6px 10px rgba(0,0,0,.7); }
+  .mtable::after { content: ""; position: absolute; inset: 5px; border-radius: 185px 185px 22px 22px / 106px 106px 22px 22px; border: 1px dashed rgba(230,200,150,.28); pointer-events: none; }
+  .mtrim { padding: 3px; border-radius: 180px 180px 16px 16px / 100px 100px 16px 16px; background: linear-gradient(180deg, #b08a4a, #5a4120 60%, #3a2a14); }
+  .felt { position: relative; overflow: hidden; padding: 16px 12px 14px; border-radius: 177px 177px 13px 13px / 97px 97px 13px 13px; background-color: #13603f;
+          box-shadow: inset 0 10px 20px rgba(0,0,0,.7), inset 0 0 50px rgba(0,0,0,.45); }
+  .felt > .tx { position: absolute; inset: 0; pointer-events: none; }
+  .felt .mottle { opacity: .8; mix-blend-mode: soft-light; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='4' seed='7'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23m)'/></svg>"); }
+  .felt .fiber { opacity: .95; mix-blend-mode: multiply; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.25' numOctaves='2' stitchTiles='stitch' seed='3'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  .felt .fluff { opacity: .5; mix-blend-mode: screen; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.9 2.4' numOctaves='1' stitchTiles='stitch' seed='19'/><feColorMatrix values='0 0 0 0 .8  0 0 0 0 .9  0 0 0 0 .8  1.4 0 0 0 -1.05'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>"); }
+  .felt .light { background: radial-gradient(ellipse 70% 30% at 50% 16%, rgba(255,232,180,.18), transparent 72%), radial-gradient(ellipse 90% 70% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  .felt > *:not(.tx) { position: relative; z-index: 1; }
+
+  .dplate { display: flex; align-items: center; gap: 7px; width: max-content; margin: 0 auto; padding: 3px 12px 3px 3px; border-radius: 99px;
+            background: linear-gradient(180deg, #1c1813, #0c0a08); border: 1px solid #7d6236; box-shadow: 0 4px 10px rgba(0,0,0,.6); font-size: 11px; color: var(--muted); }
+  .dplate b { font: 500 12px var(--serif); color: var(--text); margin-right: 4px; }
+  .av { flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; font-family: var(--serif); font-weight: 700; color: #2a1f10;
+        background: radial-gradient(circle at 35% 30%, #efe2c4, #b9a37a 70%, #8a7452); box-shadow: 0 0 0 1.5px #0c0a08, 0 0 0 2.5px var(--ring, #6e5631); }
+  .hand { display: flex; justify-content: center; align-items: flex-start; }
+  .card { position: relative; flex: 0 0 auto; width: var(--w); height: calc(var(--w) * 1.4); border-radius: calc(var(--w) * .08); color: #1c1b1a; overflow: hidden;
+          background: linear-gradient(165deg, #fffdf7 0%, #f6f1e5 55%, #ebe3d1 100%);
+          box-shadow: inset 0 0 0 1px rgba(60,40,10,.14), 0 1px 0 #d4ccb8, 0 2px 0 #c0b6a0, 0 4px 8px rgba(0,0,0,.4); }
+  .card.red { color: #b3261e; }
+  .card svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .card svg .rk { font-family: "Times New Roman", Georgia, serif; font-weight: 700; fill: currentColor; }
+  .card.niu { box-shadow: inset 0 0 0 1px rgba(60,40,10,.14), 0 0 0 1.5px rgba(216,179,106,.9), 0 2px 0 #c0b6a0, 0 4px 8px rgba(0,0,0,.4); }
+  .card.dim { filter: brightness(.8) saturate(.75); }
+  .dresult { display: flex; justify-content: center; align-items: center; gap: 7px; width: max-content; margin: 10px auto 0; padding: 2px 3px 2px 10px; border-radius: 99px;
+             background: rgba(8,20,15,.8); border: 1px solid rgba(236,222,184,.35); font-size: 11px; color: #a99f88; }
+  .dresult b { font: 700 11px var(--serif); padding: 2px 8px; border-radius: 99px; background: linear-gradient(180deg, #d8b36a, #9b7838); color: #1d150a; }
+  .printed { text-align: center; margin: 12px 0 10px; color: var(--print); font-family: var(--serif); }
+  .printed div { font-size: 11px; letter-spacing: 1px; }
+  .printed strong { display: block; margin-top: 4px; font-size: 15px; letter-spacing: 8px; opacity: .55; }
+
+  .sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { position: relative; padding: 8px 8px 7px; border-radius: 10px; border: 1px solid var(--print); background: rgba(0,0,0,.14); }
+  .seat::before { content: attr(data-n); position: absolute; top: -8px; right: 10px; padding: 0 4px; font: 11px Georgia, serif; color: var(--print); background: #135d3e; }
+  .seat .ph { display: flex; align-items: center; gap: 7px; }
+  .seat .ph .av { width: 24px; height: 24px; font-size: 11px; }
+  .seat .ph b { font: 500 12px var(--serif); }
+  .seat .ph .tag { margin-left: auto; font-size: 10px; padding: 0 4px; border-radius: 3px; color: #cdbf9c; background: rgba(0,0,0,.35); border: 1px solid rgba(201,163,92,.35); line-height: 16px; }
+  .seat .hand { margin: 8px 0 7px; }
+  .seat .pf { display: flex; align-items: center; gap: 6px; padding: 5px 7px; border-radius: 6px; background: linear-gradient(180deg, rgba(20,16,12,.9), rgba(10,8,6,.9)); border: 1px solid #5a4527; }
+  .seat .pf .tot { font: 700 15px Georgia, serif; margin-right: auto; font-variant-numeric: tabular-nums; }
+  .seat .pf .nn { font: 500 12px var(--serif); color: #e6dcc4; }
+  .mult { font: 700 11px/16px Georgia, serif; padding: 0 5px; border-radius: 3px; }
+  .mult.w { color: #a9e6cc; background: rgba(127,207,174,.12); border: 1px solid rgba(127,207,174,.45); }
+  .mult.l { color: #f0a08c; background: rgba(226,122,98,.12); border: 1px solid rgba(226,122,98,.45); }
+  .mult.o { color: #a99f88; border: 1px solid rgba(236,222,184,.25); font: 500 11px/16px var(--serif); }
+  .seat.won .pf { border-color: rgba(127,207,174,.55); box-shadow: 0 0 14px rgba(127,207,174,.15); }
+  .seat.out { filter: grayscale(1); opacity: .6; }
+  .seat.out .ash { height: 59px; margin: 8px 0 7px; display: grid; place-items: center; font: 12px var(--serif); color: var(--muted); position: relative; }
+  .ember { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffb469; box-shadow: 0 0 6px 2px rgba(255,120,40,.6); filter: none; }
+  .seat.you { margin-top: 10px; border-color: rgba(217,180,106,.85); background: rgba(0,0,0,.2); }
+  .seat.you::before { color: #d9b46a; }
+  .seat.you .ph .av { width: 30px; height: 30px; font-size: 13px; --ring: #d9b46a; }
+  .seat.you .ph b { font-size: 14px; }
+  .seat.you .pf { border-color: #d9b46a; }
+  .seat.you .pf .tot { font-size: 18px; }
+  .seat.you .pf .nn { font-size: 14px; }
+  .seat.you .mult { font-size: 13px; line-height: 20px; padding: 0 7px; }
+  .seat.edit { box-shadow: 0 0 0 2px #d9b46a; }
+
+  /* 面板通用 */
+  .sec { margin: 14px 12px 0; }
+  .pnl { border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #17130e, #0f0c09); padding: 12px 14px; }
+  .pnl + .pnl { margin-top: 10px; }
+  .pnl h2 { margin: 2px 0 0; font: 700 17px var(--serif); letter-spacing: .06em; }
+  .eyebrow { font-size: 10px; letter-spacing: .26em; color: var(--brass); }
+  .lbl { font-size: 12px; color: var(--muted); }
+  .cap { font-size: 11px; color: var(--faint); line-height: 1.6; }
+  .ph2 { display: flex; justify-content: space-between; align-items: baseline; }
+  .big { font: 400 38px/1.15 Georgia, serif; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .duo .pnl { margin: 0; } .duo b { display: block; font: 400 22px Georgia, serif; margin-top: 4px; }
+  .rl li { display: grid; grid-template-columns: 44px 62px 1fr auto; align-items: center; padding: 6px 0; border-top: 1px solid #241c13; font-size: 12px; }
+  .rl ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .rl li .nm, .rl li .hd { font-family: var(--serif); } .rl li .vs { color: var(--faint); font-size: 11px; }
+  .rl li b { font: 400 14px Georgia, serif; } .rl li.gone { opacity: .45; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 2px; vertical-align: middle; margin-right: 4px; }
+  .zs { display: flex; align-items: center; gap: 10px; }
+  .zs .ok { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--win); border: 1px solid rgba(127,207,174,.5); font-size: 12px; }
+  .zs b { display: block; font: 600 13px var(--serif); color: var(--win); } .zs div { flex: 1; }
+
+  .mc h2 { margin: 6px 0 8px; font: 700 21px/1.4 var(--serif); }
+  .strats { display: flex; gap: 6px; overflow-x: auto; margin: 10px -14px 0; padding: 0 14px 2px; scrollbar-width: none; }
+  .strats span { flex: 0 0 auto; font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid #2e2419; color: var(--muted); }
+  .strats span.on { border-color: var(--brass); color: var(--brass); background: rgba(201,163,92,.1); }
+  .btn { font: 500 14px var(--serif); letter-spacing: .06em; height: 44px; padding: 0 16px; border-radius: 10px; color: var(--text); white-space: nowrap;
+         background: linear-gradient(180deg, #221c14, #15110c); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .btn.primary { color: #1d150a; border-color: #d9b46a; background: linear-gradient(180deg, #e0bd74, #a98239); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 4px 10px rgba(0,0,0,.5); }
+  .hist { display: flex; align-items: flex-end; gap: 4px; height: 90px; margin-top: 12px; border-bottom: 1px solid #3e3020; }
+  .hist i { flex: 1; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #d8b36a, #7a5c2a); }
+  .hist i.surv { background: repeating-linear-gradient(45deg, #3a3326 0 4px, #2a251c 4px 8px); }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 12px; background: #2a2117; border-radius: 8px; overflow: hidden; }
+  .facts div { padding: 8px 9px; background: #100d09; font-size: 11px; color: var(--faint); }
+  .facts b { display: block; margin-top: 2px; font: 400 16px Georgia, serif; color: var(--text); }
+  .learn article { padding: 12px 0; border-top: 1px solid #2a2117; }
+  .learn span { font: 12px Georgia, serif; color: var(--brass); }
+  .learn h3 { margin: 4px 0 4px; font: 700 16px var(--serif); }
+  .learn p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .foot { margin-top: 18px; padding: 18px 16px 120px; background: #080807; border-top: 1px solid #2a2117; }
+  .foot strong { font: 700 16px var(--serif); }
+  .foot p { margin: 6px 0 10px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .foot a { display: block; color: var(--brass); font-size: 13px; text-decoration: none; padding: 6px 0; }
+  .foot small { display: block; margin-top: 10px; font-size: 11px; color: #5c554a; line-height: 1.6; }
+
+  /* 底部操作条（固定在屏幕底部） */
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; padding: 10px 12px 26px; display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px;
+          background: linear-gradient(180deg, rgba(11,11,10,0), rgba(11,11,10,.92) 26%, #0b0b0a); }
+  .dock .btn { height: 46px; } .dock .spd { width: 52px; padding: 0; font: 15px Georgia, serif; }
+  .dock .home { position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; border-radius: 3px; background: #e8e8e8; transform: translateX(-50%); }
+
+  /* 底部弹出面板 */
+  .scrim { position: absolute; inset: 0; z-index: 35; background: rgba(0,0,0,.5); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 36; padding: 10px 16px 30px; border-radius: 22px 22px 0 0;
+           background: linear-gradient(180deg, #1f1a13, #110d09); border-top: 1px solid #d9b46a; box-shadow: 0 -20px 40px rgba(0,0,0,.6); }
+  .sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: #4a3e2c; margin: 0 auto 12px; }
+  .sheet h3 { margin: 0; font: 700 17px var(--serif); display: flex; justify-content: space-between; align-items: baseline; }
+  .sheet h3 span { font: 400 12px "Microsoft YaHei"; color: var(--muted); }
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .slot { padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(236,222,184,.3); background: rgba(19,96,63,.3); }
+  .slot.active { border: 1.5px solid var(--brass); background: rgba(19,96,63,.5); }
+  .slot span { font-size: 11px; color: var(--muted); } .slot b { display: block; font: 400 30px Georgia, serif; margin: 2px 0; } .slot small { font-size: 11px; color: var(--faint); }
+  .chips { display: flex; justify-content: space-between; padding: 18px 6px 8px; }
+  .chipbtn { position: relative; width: 62px; height: 62px; border-radius: 50%; border: 0;
+             background: repeating-conic-gradient(from 8deg, var(--c) 0 20deg, var(--edge) 20deg 30deg, var(--c) 30deg 45deg);
+             box-shadow: 0 2px 0 var(--side), 0 4px 0 var(--side2), 0 8px 14px rgba(0,0,0,.5); }
+  .chipbtn::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.4); }
+  .chipbtn::after { content: attr(data-v); position: absolute; inset: 0; display: grid; place-items: center; font: 700 16px Georgia, serif; color: var(--txt); }
+  .chipbtn.off { opacity: .35; }
+  .sheet .note { margin: 6px 0 12px; font-size: 12px; color: var(--faint); text-align: center; }
+  .sheet .note b { color: #f0a08c; font: 400 13px Georgia, serif; }
+  .sheet .acts { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; }
+  .seg { display: flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 10px; background: #0f0c09; margin-top: 14px; }
+  .seg button { flex: 1; font: 14px "Microsoft YaHei"; color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 8px 0; }
+  .seg button.on { background: var(--brass); color: #1d150a; }
+  .slist { list-style: none; margin: 12px 0 14px; padding: 0; border: 1px solid #2e2419; border-radius: 10px; overflow: hidden; }
+  .slist li { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-top: 1px solid #241c13; font-size: 14px; color: #d8ceb6; }
+  .slist li:first-child { border-top: 0; } .slist li small { color: var(--faint); font-size: 12px; }
+  .slist li.on { background: rgba(201,163,92,.14); color: var(--brass); }
+  .slist li.on::after { content: "✓"; margin-left: 8px; }
+  .sheet .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="s-h" viewBox="0 0 100 100"><path d="M50 92 C22 70 3 52 3 31 C3 15 15 4 29 4 C39 4 46 10 50 19 C54 10 61 4 71 4 C85 4 97 15 97 31 C97 52 78 70 50 92Z"/></symbol>
+    <symbol id="s-d" viewBox="0 0 100 100"><path d="M50 2 C60 20 74 36 90 50 C74 64 60 80 50 98 C40 80 26 64 10 50 C26 36 40 20 50 2Z"/></symbol>
+    <symbol id="s-s" viewBox="0 0 100 100"><path d="M50 3 C64 24 97 40 97 62 C97 76 86 84 74 84 C64 84 57 79 54 72 C55 82 60 91 69 97 L31 97 C40 91 45 82 46 72 C43 79 36 84 26 84 C14 84 3 76 3 62 C3 40 36 24 50 3Z"/></symbol>
+    <symbol id="s-c" viewBox="0 0 100 100"><circle cx="50" cy="27" r="22"/><circle cx="25" cy="58" r="22"/><circle cx="75" cy="58" r="22"/><circle cx="50" cy="52" r="12"/><path d="M46 52 C46 76 41 88 31 97 L69 97 C59 88 54 76 54 52Z"/></symbol>
+    <pattern id="court-bg" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#f4e8c8"/><rect width="1.4" height="5" fill="#e2cd99"/></pattern>
+  </defs>
+</svg>
+
+<div class="intro">
+  <b>手机竖屏稿 v1</b>：同一个网址，在手机上打开时自动换成这套排法。每个手机框是 390 × 844 原尺寸，里面可以上下滚动。<br>
+  牌桌改成竖向：庄家在上，其余四位两两一排，“你”单独占最下面一整行、牌最大。操作按钮固定在屏幕底部，下注和座位设置都从底部弹出。
+</div>
+
+<div class="frames">
+  <div class="frame"><h3>① 自动运行中</h3><div class="phone"><div class="screen" id="f1"></div></div></div>
+  <div class="frame"><h3>② 轮到你下注</h3><div class="phone"><div class="screen" id="f2"></div></div></div>
+  <div class="frame"><h3>③ 点铭牌 · 座位设置</h3><div class="phone"><div class="screen" id="f3"></div></div></div>
+  <div class="frame"><h3>④ 往下滚 · 证据与实验</h3><div class="phone"><div class="screen" id="f4"></div></div></div>
+</div>
+
+<script>
+  // ---------- 牌面（大号角标，与桌面版一致） ----------
+  const SUIT = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+  const isRed = s => s === '♥' || s === '♦';
+  const use = (id, x, y, sz) => `<use href="#s-${id}" x="${x - sz / 2}" y="${y - sz / 2}" width="${sz}" height="${sz}" fill="currentColor"/>`;
+  const ORN = {
+    K: '<path d="M38 33 L37 22 L43.5 27.5 L50 19 L56.5 27.5 L63 22 L62 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/>',
+    Q: '<path d="M39 33 Q50 18 61 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/><circle cx="50" cy="24" r="1.6" fill="currentColor"/>',
+    J: '<path d="M44 33 C44 26 50 20 58 19 C54 23 53 28 56 33Z" fill="#c9a35c" stroke="currentColor" stroke-width=".8"/>',
+  };
+  function face(r, s) {
+    const id = SUIT[s], ten = r === '10', court = ['J','Q','K'].includes(r);
+    let g = `<rect x="4" y="4" width="92" height="132" rx="5" fill="none" stroke="${court ? '#c9a35c' : 'currentColor'}" stroke-width="${court ? 1.2 : .8}" opacity="${court ? 1 : .14}"/>`;
+    g += `<text class="rk" x="${ten ? 5 : 9}" y="44" font-size="${ten ? 36 : 44}" letter-spacing="${ten ? -4 : 0}">${r}</text>` + use(id, 21, 60, 17);
+    if (court) g += `<rect x="42" y="64" width="50" height="68" rx="3" fill="url(#court-bg)" stroke="currentColor"/><rect x="45" y="67" width="44" height="62" rx="2" fill="none" stroke="#c9a35c" stroke-width=".9"/><g transform="translate(17 57)">${ORN[r]}</g>` + use(id, 67, 108, 24);
+    else if (r === 'A') g += `<circle cx="66" cy="102" r="27" fill="none" stroke="currentColor" stroke-width=".8" opacity=".3"/>` + use(id, 66, 102, 40);
+    else g += use(id, 68, 104, 46);
+    return `<svg viewBox="0 0 100 140">${g}</svg>`;
+  }
+  // 手牌：前三张凑牛（金边），后两张算点；ov = 叠压量
+  function hand(cards, w, ov, gap, dim) {
+    return `<div class="hand">${cards.map(([r, s], i) =>
+      `<div class="card ${isRed(s) ? 'red' : ''} ${i < 3 ? 'niu' : ''} ${dim ? 'dim' : ''}" style="--w:${w}px; margin-left:${i === 0 ? 0 : i === 3 ? gap : -ov}px">${face(r, s)}</div>`).join('')}</div>`;
+  }
+
+  // ---------- 数据（与桌面稿一致） ----------
+  const DEALER = [['K','♠'],['7','♥'],['3','♣'],['2','♦'],['5','♥']];
+  const S = {
+    zhou: { n: '01', name: '老周', av: '周', tag: '平注', tot: -188, nn: '牛五', m: ['×2', 'l'], cards: [['2','♠'],['8','♥'],['K','♣'],['5','♠'],['Q','♦']] },
+    jie:  { n: '02', name: '阿杰', av: '杰', tag: '马丁格尔', tot: 66, nn: '牛八', m: ['×3', 'w'], won: true, cards: [['A','♥'],['9','♠'],['J','♣'],['4','♦'],['4','♠']] },
+    hao:  { n: '03', name: '豪客', av: '豪', tag: '豪客', tot: -1000, out: true },
+    chen: { n: '04', name: '小陈', av: '陈', tag: '凯利', tot: -256, nn: '牛二', m: ['×2', 'l'], cards: [['3','♣'],['7','♠'],['K','♥'],['10','♣'],['2','♦']] },
+    you:  { n: '05', name: '你', av: '你', tag: '手动', tot: -545, nn: '牛五', m: ['×2', 'l'], cards: [['5','♦'],['Q','♣'],['5','♠'],['9','♥'],['6','♣']] },
+  };
+  const fmt = d => (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d).toLocaleString();
+
+  function seat(s, opt = {}) {
+    const big = s.name === '你';
+    const cls = ['seat', big ? 'you' : '', s.won ? 'won' : '', s.out ? 'out' : '', opt.edit ? 'edit' : ''].join(' ');
+    let body;
+    if (s.out) {
+      body = `<div class="ash">第 217 局离席${[0,1,2,3,4].map(e => `<span class="ember" style="left:${30 + e * 18}px; top:${20 + (e % 2) * 12}px; opacity:${.4 + (e % 3) * .2}"></span>`).join('')}</div>`;
+    } else if (opt.hidden) {
+      body = `<div style="height:${big ? 62 : 45}px; margin:8px 0 7px; display:grid; place-items:center; font-size:11px; color:var(--print)">等待发牌</div>`;
+    } else {
+      body = big ? hand(s.cards, 50, -6, 12, s.m[1] === 'l') : hand(s.cards, 32, 12, 5, s.m[1] === 'l');
+    }
+    const right = s.out ? `<span class="mult o">离席</span>` : opt.hidden ? `<span class="mult o">待下注</span>` : `<span class="nn">${s.nn}</span><span class="mult ${s.m[1]}">${s.m[0]}</span>`;
+    return `<div class="${cls}" data-n="${s.n}">
+      <div class="ph"><span class="av">${s.av}</span><b>${s.name}</b><span class="tag">${s.tag}</span></div>
+      ${body}
+      <div class="pf"><span class="tot ${s.tot > 0 ? 'win' : 'loss'}">${fmt(s.tot)}</span>${right}</div>
+    </div>`;
+  }
+
+  function table(opt = {}) {
+    const dealerCards = opt.hidden
+      ? `<div class="hand">${[0,1,2,3,4].map(i => `<div class="card" style="--w:50px; margin-left:${i ? 6 : 0}px; background: repeating-linear-gradient(45deg, transparent 0 3px, rgba(255,236,200,.18) 3px 4px), #6c1b1f; box-shadow: inset 0 0 0 3px #f2ead8, inset 0 0 0 4px #6c1b1f, 0 4px 8px rgba(0,0,0,.4)"></div>`).join('')}</div>`
+      : hand(DEALER, 50, -6, 14, false);
+    const res = opt.hidden
+      ? `<div class="dresult" style="padding-right:10px">本局还没发牌</div>`
+      : `<div class="dresult">K+7+3=20 · 2+5=7<b>庄 · 牛七 ×2</b></div>`;
+    return `<div class="mtable"><div class="mtrim"><div class="felt">
+      <div class="tx mottle"></div><div class="tx fiber"></div><div class="tx fluff"></div><div class="tx light"></div>
+      <div class="dplate"><span class="av" style="width:24px;height:24px;font-size:11px;--ring:#c9a35c">林</span><b>荷官 · 林姐</b>本班剩余 12 局</div>
+      <div style="height:12px"></div>
+      ${dealerCards}
+      ${res}
+      <div class="printed"><div>牛牛 ×5 · 牛九 ×4 · 牛八 ×3 · 牛七 ×2 · 同牌型庄家胜</div><strong>概率余烬</strong></div>
+      <div class="sgrid">${seat(S.zhou, { hidden: opt.hidden, edit: opt.edit })}${seat(S.jie, { hidden: opt.hidden })}${seat(S.hao)}${seat(S.chen, { hidden: opt.hidden })}</div>
+      ${seat(S.you, { hidden: opt.hidden })}
+    </div></div></div>`;
+  }
+
+  function chart() {
+    let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const N = 48, R = 1284, W = 330, top = 8, bot = 132, maxV = 1600;
+    const y = v => bot - (v / maxV) * (bot - top), x = i => 26 + (i / (N - 1)) * (W - 30);
+    const series = [
+      { name: '老周', end: 812, col: '#cfc4a8', vol: 18 }, { name: '阿杰', end: 1066, col: '#7fcfae', vol: 60 },
+      { name: '豪客', end: 0, col: '#e27a62', vol: 90, bust: 217 }, { name: '小陈', end: 744, col: '#8fa7c7', vol: 14 },
+      { name: '你', end: 455, col: '#d9b46a', vol: 34, you: true },
+    ];
+    let g = '';
+    [0, 500, 1000, 1500].forEach(v => {
+      g += `<line x1="26" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 1000 ? 'rgba(236,222,184,.35)' : 'rgba(236,222,184,.08)'}" ${v === 1000 ? 'stroke-dasharray="3 3"' : ''}/><text x="21" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#776f5f" font-family="Georgia">${v}</text>`;
+    });
+    series.forEach(s => {
+      const n = s.bust ? Math.round(s.bust / R * (N - 1)) : N - 1;
+      let v = 1000; const w = [1000];
+      for (let i = 1; i <= n; i++) { v += (rnd() - .5) * s.vol * 2; w.push(v); }
+      const pts = w.map((val, i) => [x(i), y(Math.max(0, Math.min(maxV, val + (s.end - w[n]) * (i / n))))]);
+      g += `<polyline points="${pts.map(p => p.map(c => c.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${s.col}" stroke-width="${s.you ? 2 : 1.2}" stroke-linejoin="round"/>`;
+      if (s.bust) { const [bx, by] = pts[pts.length - 1]; g += `<circle cx="${bx}" cy="${by}" r="3" fill="#ff9a4a"/>`; }
+    });
+    return `<svg viewBox="0 0 ${W} 140" width="100%" style="display:block;margin-top:6px">${g}</svg><div class="legend">${series.map(s => `<span><i style="background:${s.col}"></i>${s.name}</span>`).join('')}</div>`;
+  }
+
+  function page(opt = {}) {
+    const paused = opt.state && opt.state !== 'auto';
+    return `
+      <div class="sysbar"><span>9:41</span><span>5G ▮▮▮</span></div>
+      <header class="m-top"><div class="brand"><span class="seal">余</span><b>概率余烬</b></div><nav><span>规则</span><span class="help">求助</span></nav></header>
+      <div class="m-badge"><i></i>无真实货币 · 纯模拟 · 教育目的</div>
+      <section class="m-hero"><h1>再聪明的下注，<br><em>也改不了概率的方向。</em></h1></section>
+      <div class="gauges"><div><span>已开局</span><b>1,284</b></div><div><span>在座</span><b>4 / 5</b></div><div><span>庄家累计</span><b style="color:var(--brass)">+3,412</b></div><div class="lk">统计 ↗</div></div>
+      <div class="status"><span><span class="dot ${paused ? 'off' : ''}"></span>${opt.state === 'bet' ? '已暂停 · 等你下注' : opt.state === 'seat' ? '已暂停 · 正在设置座位' : '自动模拟中 · 3×'}</span><span>点铭牌可设置座位</span></div>
+      ${table({ hidden: opt.state === 'bet', edit: opt.state === 'seat' })}
+      <section class="sec" id="evidence">
+        <div class="pnl rl"><div class="ph2"><b class="serif" style="font-size:14px">上一局 · 第 1,284 局</b><span class="cap">本局庄家 −2</span></div>
+          <ul><li><span class="nm">老周</span><span class="hd">牛五</span><span class="vs">输给庄家</span><b class="loss">−20</b></li>
+          <li><span class="nm">阿杰</span><span class="hd win">牛八 ×3</span><span class="vs">赢庄家</span><b class="win">+40</b></li>
+          <li><span class="nm">小陈</span><span class="hd">牛二</span><span class="vs">输给庄家</span><b class="loss">−8</b></li>
+          <li><span class="nm">你</span><span class="hd">牛五</span><span class="vs">输给庄家</span><b class="loss">−10</b></li>
+          <li class="gone"><span class="nm">豪客</span><span class="hd">—</span><span class="vs">已离场</span><b>—</b></li></ul></div>
+        <div class="pnl" style="margin-top:14px"><div class="ph2"><div><div class="eyebrow">LIVE EVIDENCE</div><h2>证据面板</h2></div><span class="cap num">n = 1,284</span></div>
+          <div class="lbl" style="margin-top:10px">玩家观测净收益率</div><div class="big" style="color:var(--lose)">−4.31%</div><div class="cap">短期会波动，样本越大越稳定地落在负值。</div></div>
+        <div class="pnl"><div class="ph2"><span class="lbl">资金随时间</span><span class="cap">点 / 局</span></div>${chart()}</div>
+        <div class="duo"><div class="pnl"><span class="lbl">已离场</span><b>1 人</b><div class="cap">豪客 · 第 217 局</div></div><div class="pnl"><span class="lbl">庄家累计</span><b style="color:var(--brass)">+3,412</b><div class="cap">同牌型庄家胜</div></div></div>
+        <div class="pnl zs" style="margin-top:10px"><span class="ok">✓</span><div><b>零和校验通过</b><span class="cap">庄家 + 全部玩家盈亏</span></div><span class="num" style="color:var(--win)">0.00</span></div>
+        <div class="pnl"><span class="lbl">多久输光？</span><div style="display:flex;justify-content:space-between;padding:8px 0 4px;font-size:13px"><span class="serif">豪客<br><span class="cap">峰值曾到 1,480</span></span><b class="num" style="color:var(--brass);font-weight:400;font-size:16px">217 局</b></div></div>
+      </section>
+      <section class="sec mc"><div class="pnl">
+        <div class="eyebrow">REPEAT THE EXPERIMENT</div><h2>一次好运不是证据，<br>一千次重复才接近答案。</h2>
+        <div class="cap">同样的本金和策略，后台独立重开 1,000 张桌子，每张最多 1,000 局。</div>
+        <div class="strats"><span>平注</span><span class="on">马丁格尔</span><span>达朗贝尔</span><span>凯利</span><span>保守</span><span>激进</span><span>豪客</span><span>偏前</span><span>偏后</span><span>灵活观察</span></div>
+        <button class="btn primary" style="width:100%;margin-top:12px">运行 1,000 次 · 马丁格尔</button>
+        <div style="margin-top:16px" class="lbl">1,000 局内输光的概率</div><div class="big" style="color:var(--lose);font-size:48px">63.4<span style="font-size:22px">%</span></div>
+        <div class="hist">${[14,46,88,104,92,78,64,52,41,33].map(v => `<i style="height:${v / 104 * 100}%"></i>`).join('')}<i class="surv" style="height:58%"></i></div>
+        <div style="display:flex;justify-content:space-between" class="cap"><span>第 0 局</span><span>破产发生在第几局</span><span>1,000</span></div>
+        <div class="facts"><div>中位破产<b>412 局</b></div><div>撑满 1,000 局<b>366</b></div><div>平均期末<b>571 点</b></div></div>
+      </div></section>
+      <section class="sec learn">
+        <article><span>01</span><h3>策略改变波动，不改变期望</h3><p>翻倍、线性加注、按本金下注，只是在重排输赢出现的顺序。</p></article>
+        <article><span>02</span><h3>有限本金扛不住无限重复</h3><p>哪怕单局只差一点点，先离场的总是本金有限的一方。</p></article>
+        <article><span>03</span><h3>短期赢钱不等于方法有效</h3><p>随机过程一定会产生“赢家”，要看大量独立重复。</p></article>
+      </section>
+      <footer class="foot"><strong>如果赌博已经影响你的生活</strong><p>模拟不能替代专业支持。停止下注，和可信赖的人谈谈，并尽快寻找当地帮助。</p>
+        <a>WHO 赌博危害说明 ↗</a><a>匿名戒赌会线上互助 ↗</a><small>本页所有“点数”均为虚拟统计单位，不可购买、提现或兑换。模拟结果不构成博彩建议。</small></footer>`;
+  }
+
+  const dock = paused => `<div class="dock"><button class="btn primary">${paused ? '▶　继续' : 'Ⅱ　暂停'}</button><button class="btn">单步</button><button class="btn">重置</button><button class="btn spd">3×</button><span class="home"></span></div>`;
+
+  const betSheet = `<div class="scrim"></div><div class="sheet">
+      <div class="grab"></div>
+      <h3>轮到你下注 <span>05 号座 · 余额 455 点</span></h3>
+      <div class="slots">
+        <div class="slot active"><span>前注 · 按牌型倍数</span><b>40</b><small>上限 50</small></div>
+        <div class="slot"><span>后注 · 恒为 ×1</span><b>20</b><small>上限 100</small></div>
+      </div>
+      <div class="chips">
+        <button class="chipbtn" data-v="10" style="--c:#e6dcc4;--edge:#2a4a7a;--side:#b8ad94;--side2:#8f856f;--txt:#2a4a7a"></button>
+        <button class="chipbtn" data-v="50" style="--c:#7a1a1f;--edge:#efe6d2;--side:#561114;--side2:#3c0b0d;--txt:#f3e9d4"></button>
+        <button class="chipbtn" data-v="100" style="--c:#1b1b1b;--edge:#d8b36a;--side:#0d0d0d;--side2:#050505;--txt:#d8b36a"></button>
+        <button class="chipbtn off" data-v="500" style="--c:#17325a;--edge:#efe6d2;--side:#0f2240;--side2:#08162b;--txt:#f3e9d4"></button>
+      </div>
+      <div class="note">本局最多可能输 <b>220</b> 点（庄家牛牛时）</div>
+      <div class="acts"><button class="btn">清空</button><button class="btn">离席</button><button class="btn primary">确认下注</button></div>
+    </div>`;
+
+  const seatSheet = `<div class="scrim"></div><div class="sheet">
+      <div class="grab"></div>
+      <h3>01 号座 · 老周 <span>当前总输赢 <b class="loss num">−188</b></span></h3>
+      <div class="seg"><button class="on">托管</button><button>手动</button></div>
+      <ul class="slist"><li class="on"><span>平注</span><small>每局固定</small></li><li><span>马丁格尔</span><small>输了加倍</small></li><li><span>达朗贝尔</span><small>输加赢减</small></li><li><span>凯利</span><small>按本金比例</small></li><li><span>保守</span><small>小注慢磨</small></li></ul>
+      <div class="two"><button class="btn">换一位赌客</button><button class="btn">请离席</button></div>
+    </div>`;
+
+  function mount(id, state, extra = '', scrollTo) {
+    const el = document.getElementById(id);
+    el.innerHTML = `<div class="notch"></div><div class="scroll">${page({ state })}</div>${extra || dock(state !== 'auto')}`;
+    const sc = el.querySelector('.scroll');
+    if (scrollTo === 'table') sc.scrollTop = el.querySelector('.mtable').offsetTop - 84;
+    if (scrollTo === 'seat') sc.scrollTop = el.querySelector('.mtable').offsetTop + 120;
+    if (scrollTo === 'evidence') sc.scrollTop = el.querySelector('#evidence').offsetTop + 120;
+  }
+  mount('f1', 'auto', '', 'table');
+  mount('f2', 'bet', betSheet, 'table');
+  mount('f3', 'seat', seatSheet, 'seat');
+  mount('f4', 'auto', '', 'evidence');
+</script>
+</body>
+</html>

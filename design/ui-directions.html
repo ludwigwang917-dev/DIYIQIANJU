@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概率余烬 · 美术方向对比稿 v1</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #1b1b1b; color: #ddd; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+  .intro { max-width: 1200px; margin: 32px auto 8px; padding: 0 24px; }
+  .intro h1 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
+  .intro p { font-size: 13px; color: #999; margin: 0; line-height: 1.7; }
+  .dir { max-width: 1200px; margin: 28px auto; padding: 0 24px; }
+  .dir-label { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; }
+  .dir-label b { font-size: 26px; font-weight: 500; color: #fff; }
+  .dir-label span { font-size: 15px; color: #ccc; }
+  .dir-label small { font-size: 12px; color: #888; margin-left: auto; }
+  .frame { border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+  .scene { display: grid; grid-template-columns: 1.6fr 1fr; min-height: 470px; }
+  .seats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .cards { display: flex; gap: 3px; justify-content: center; }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .tag-row i { font-style: normal; font-size: 12px; padding: 3px 9px; border-radius: 99px; background: #2a2a2a; color: #bbb; }
+  .swatches { display: flex; gap: 6px; margin-top: 10px; }
+  .swatches span { width: 34px; height: 22px; border-radius: 4px; border: 1px solid #444; }
+
+  /* ===== A 实验室手记 ===== */
+  .a { background: #f3efe4; color: #23211c; font-family: "Songti SC", "SimSun", "Noto Serif SC", serif;
+       background-image: linear-gradient(#e4ddcb 1px, transparent 1px), linear-gradient(90deg, #e4ddcb 1px, transparent 1px);
+       background-size: 22px 22px; }
+  .a .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; border-bottom: 2px solid #23211c; font-family: Consolas, monospace; font-size: 12px; letter-spacing: .06em; }
+  .a .top b { font-family: "Songti SC", "SimSun", serif; font-size: 18px; letter-spacing: .1em; }
+  .a .stamp { border: 2px solid #b0362b; color: #b0362b; padding: 2px 8px; transform: rotate(-4deg); font-weight: bold; }
+  .a .left { padding: 22px; border-right: 1px dashed #8d8572; }
+  .a .specimen { border: 1.5px solid #23211c; background: #fbf8f0; padding: 14px; position: relative; }
+  .a .specimen::before { content: "样本 #0412 · 荷官"; position: absolute; top: -9px; left: 12px; background: #f3efe4; padding: 0 6px; font-size: 11px; font-family: Consolas, monospace; }
+  .a .card { width: 40px; height: 56px; border: 1.2px solid #23211c; background: #fff; font: 14px Georgia, serif; display: grid; place-items: center; }
+  .a .card.r { color: #b0362b; }
+  .a .seat { border: 1.2px solid #23211c; background: #fbf8f0; padding: 8px; font-size: 12px; }
+  .a .seat .card { width: 20px; height: 30px; font-size: 9px; }
+  .a .seat em { font-style: normal; font-family: Consolas, monospace; font-size: 11px; display: block; margin-top: 6px; }
+  .a .seat .loss { color: #b0362b; }
+  .a .seat.dead { opacity: .45; text-decoration: line-through; }
+  .a .note { margin: 16px 0; font-size: 13px; padding-left: 10px; border-left: 3px solid #b0362b; }
+  .a .right { padding: 22px; font-family: Consolas, monospace; font-size: 12px; }
+  .a .bigfig { font: 46px Georgia, serif; color: #b0362b; }
+  .a svg path.l { fill: none; stroke-width: 1.4; }
+
+  /* ===== B 余烬夜场 ===== */
+  .b { background: #0b0f0d; color: #e9e2d0; font-family: "Microsoft YaHei", sans-serif; }
+  .b .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; border-bottom: 1px solid #2a2a22; font-size: 12px; color: #9a927e; }
+  .b .top b { color: #e8a54a; font-family: "Songti SC", "SimSun", serif; font-size: 18px; letter-spacing: .14em; }
+  .b .left { padding: 22px; position: relative; overflow: hidden; }
+  .b .felt { position: relative; border-radius: 200px 200px 24px 24px; padding: 26px 22px 20px;
+             background: radial-gradient(ellipse at 50% 30%, #1f4a3a 0%, #102a21 55%, #081611 100%);
+             box-shadow: inset 0 0 0 6px #2b1d12, inset 0 0 0 8px #6b4a24, 0 20px 60px rgba(0,0,0,.6); }
+  .b .felt::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+             background: radial-gradient(circle at 20% 90%, rgba(232,120,40,.18), transparent 35%), radial-gradient(circle at 85% 80%, rgba(232,120,40,.12), transparent 30%); }
+  .b .dealer { text-align: center; font-size: 12px; color: #c9b88f; margin-bottom: 8px; }
+  .b .card { width: 40px; height: 56px; border-radius: 5px; background: linear-gradient(#fbf6ea, #e9e0ca); color: #1a1a1a; font: 14px Georgia, serif; display: grid; place-items: center; box-shadow: 0 4px 10px rgba(0,0,0,.5); }
+  .b .card.r { color: #a8231c; }
+  .b .seat { background: rgba(0,0,0,.35); border: 1px solid rgba(232,165,74,.22); border-radius: 10px; padding: 8px; font-size: 12px; position: relative; z-index: 1; }
+  .b .seat .card { width: 20px; height: 30px; font-size: 9px; border-radius: 3px; }
+  .b .seat em { font-style: normal; display: block; margin-top: 6px; font-family: Georgia, serif; }
+  .b .seat .loss { color: #ff7a57; }
+  .b .seat .win { color: #6fd3b5; }
+  .b .seat.dead { filter: grayscale(1) brightness(.5); }
+  .b .chip { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #e8a54a; border: 3px dashed #7a4a16; vertical-align: middle; margin-right: 4px; }
+  .b .center-msg { text-align: center; margin: 14px 0; color: #e8a54a; font-family: "Songti SC", serif; font-size: 17px; text-shadow: 0 0 18px rgba(232,140,50,.6); position: relative; z-index: 1; }
+  .b .right { padding: 22px; background: #0f1411; border-left: 1px solid #22261f; font-size: 12px; color: #9a927e; }
+  .b .bigfig { font: 46px Georgia, serif; color: #ff7a57; text-shadow: 0 0 20px rgba(255,100,60,.35); }
+  .b .ember { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffb060; box-shadow: 0 0 6px #ff8030; opacity: .8; }
+
+  /* ===== C 褪色霓虹 · 港式警世 ===== */
+  .c { background: #15121c; color: #efe6d6; font-family: "Microsoft YaHei", sans-serif; position: relative; }
+  .c::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); }
+  .c .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: #0e0c13; border-bottom: 3px solid #e0425a; font-size: 12px; }
+  .c .top b { font-size: 20px; color: #ff5d7a; letter-spacing: .12em; text-shadow: 0 0 8px rgba(255,93,122,.7); font-family: "SimHei", sans-serif; }
+  .c .top .sign { color: #5ef0d2; text-shadow: 0 0 6px rgba(94,240,210,.7); }
+  .c .left { padding: 22px; }
+  .c .felt { background: #1d3b33; border: 4px solid #0b0a0e; outline: 2px solid #5ef0d2; outline-offset: -10px; padding: 26px 22px 20px; position: relative; }
+  .c .dealer { text-align: center; font-size: 12px; color: #f4d35e; margin-bottom: 8px; }
+  .c .card { width: 40px; height: 56px; background: #f0e8d8; color: #111; border: 2px solid #111; font: bold 14px "SimHei", sans-serif; display: grid; place-items: center; box-shadow: 3px 3px 0 #0b0a0e; }
+  .c .card.r { color: #d22d45; }
+  .c .seat { background: #0e0c13; border: 2px solid #3a3346; padding: 8px; font-size: 12px; box-shadow: 4px 4px 0 #000; }
+  .c .seat .card { width: 20px; height: 30px; font-size: 9px; border-width: 1px; box-shadow: 1px 1px 0 #000; }
+  .c .seat em { font-style: normal; display: block; margin-top: 6px; font-family: Consolas, monospace; }
+  .c .seat .loss { color: #ff5d7a; }
+  .c .seat .win { color: #5ef0d2; }
+  .c .seat.dead { background: repeating-linear-gradient(45deg, #1a1420 0 6px, #0e0c13 6px 12px); color: #666; }
+  .c .banner { margin: 14px auto; width: max-content; background: #f4d35e; color: #15121c; padding: 4px 14px; font: bold 15px "SimHei", sans-serif; transform: rotate(-1.5deg); box-shadow: 3px 3px 0 #000; }
+  .c .right { padding: 22px; background: #0e0c13; font-size: 12px; color: #a99fb8; border-left: 2px solid #3a3346; }
+  .c .bigfig { font: bold 48px Consolas, monospace; color: #ff5d7a; text-shadow: 0 0 12px rgba(255,93,122,.6); }
+
+  .muted { opacity: .7; }
+  .row { display: flex; justify-content: space-between; padding: 6px 0; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>概率余烬 · 美术方向对比稿 v1</h1>
+  <p>同一个画面（荷官 + 5 个座位 + 证据面板）用三种风格各画一遍。只看气质，不看细节。每个方向下面写了它想传达的感受、风险和配色。</p>
+</div>
+
+<!-- ============ A ============ -->
+<section class="dir">
+  <div class="dir-label"><b>A</b><span>实验室手记 · 把赌桌当标本观察</span><small>冷静 / 学术 / 去魅</small></div>
+  <div class="frame a">
+    <div class="top"><b>概率余烬 · 实验记录</b><span>EXP-0412 · n = 1,284 局</span><span class="stamp">虚拟点数 · 非真钱</span></div>
+    <div class="scene">
+      <div class="left">
+        <div class="specimen">
+          <div class="cards"><span class="card">K</span><span class="card r">7</span><span class="card">3</span><span class="card r">J</span><span class="card">Q</span></div>
+          <div style="text-align:center; font-size:12px; margin-top:8px; font-family:Consolas,monospace">庄 · 牛七 ×2</div>
+        </div>
+        <div class="note">观察记录：同牌型归庄，这一条规则让庄家在长期里稳稳领先。</div>
+        <div class="seats">
+          <div class="seat">01 平注<div class="cards" style="margin-top:6px"><span class="card">2</span><span class="card r">8</span><span class="card">K</span><span class="card">5</span><span class="card r">Q</span></div><em class="loss">−20 · 本金 812</em></div>
+          <div class="seat">02 马丁格尔<div class="cards" style="margin-top:6px"><span class="card r">A</span><span class="card">9</span><span class="card">J</span><span class="card r">4</span><span class="card">6</span></div><em>+40 · 本金 1,066</em></div>
+          <div class="seat dead">03 豪客<div style="margin-top:12px">第 217 局破产</div><em>本金 0</em></div>
+          <div class="seat">04 凯利<div class="cards" style="margin-top:6px"><span class="card">3</span><span class="card">7</span><span class="card r">K</span><span class="card">10</span><span class="card r">2</span></div><em class="loss">−8 · 本金 744</em></div>
+          <div class="seat">05 你<div class="cards" style="margin-top:6px"><span class="card r">5</span><span class="card">Q</span><span class="card">5</span><span class="card r">9</span><span class="card">A</span></div><em class="loss">−10 · 本金 655</em></div>
+        </div>
+      </div>
+      <div class="right">
+        <div>观测净收益率</div>
+        <div class="bigfig">−4.31%</div>
+        <svg viewBox="0 0 300 140" width="100%" style="margin:10px 0; background:#fbf8f0; border:1px solid #23211c">
+          <line x1="0" y1="40" x2="300" y2="40" stroke="#8d8572" stroke-dasharray="3 3"/>
+          <path class="l" stroke="#23211c" d="M0 40 L30 34 L60 44 L90 38 L120 52 L150 48 L180 63 L210 70 L240 66 L270 82 L300 90"/>
+          <path class="l" stroke="#b0362b" d="M0 40 L30 30 L60 22 L90 48 L120 60 L150 92 L170 138"/>
+          <path class="l" stroke="#6b6555" d="M0 40 L30 46 L60 40 L90 55 L120 50 L150 58 L180 72 L210 66 L240 80 L270 86 L300 104"/>
+          <text x="174" y="132" font-size="10" fill="#b0362b" font-family="Consolas">破产</text>
+        </svg>
+        <div class="row"><span>零和校验</span><b>0.00 ✓</b></div>
+        <div class="row"><span>庄家累计</span><b>+3,412</b></div>
+        <div class="row"><span>已破产</span><b>2 人</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="tag-row"><i>感受：像在看实验报告，赌桌被“去魅”</i><i>风险：游戏感弱，年轻用户可能觉得像作业</i><i>适合：教育机构、课堂演示</i></div>
+  <div class="swatches"><span style="background:#f3efe4"></span><span style="background:#23211c"></span><span style="background:#b0362b"></span><span style="background:#8d8572"></span></div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="dir">
+  <div class="dir-label"><b>B</b><span>余烬夜场 · 当前方向的加强版</span><small>沉浸 / 电影感 / 慢慢熄灭</small></div>
+  <div class="frame b">
+    <div class="top"><b>概率余烬</b><span>营业时钟 03:42 · 本班剩余 12 局</span><span>无真实货币 · 纯模拟</span></div>
+    <div class="scene">
+      <div class="left">
+        <span class="ember" style="left:12%; top:80%"></span><span class="ember" style="left:30%; top:88%"></span><span class="ember" style="left:76%; top:84%"></span><span class="ember" style="left:88%; top:70%; opacity:.4"></span>
+        <div class="felt">
+          <div class="dealer">当班荷官 · 林姐 <span style="color:#e8a54a">牛七 ×2</span></div>
+          <div class="cards"><span class="card">K</span><span class="card r">7</span><span class="card">3</span><span class="card r">J</span><span class="card">Q</span></div>
+          <div class="center-msg">短期的火光，长期的灰烬</div>
+          <div class="seats">
+            <div class="seat"><span class="chip"></span>平注<div class="cards" style="margin-top:6px"><span class="card">2</span><span class="card r">8</span><span class="card">K</span><span class="card">5</span><span class="card r">Q</span></div><em class="loss">−20 · 812</em></div>
+            <div class="seat"><span class="chip"></span>马丁<div class="cards" style="margin-top:6px"><span class="card r">A</span><span class="card">9</span><span class="card">J</span><span class="card r">4</span><span class="card">6</span></div><em class="win">+40 · 1,066</em></div>
+            <div class="seat dead">豪客<div style="margin-top:12px">已离席</div><em>第 217 局</em></div>
+            <div class="seat"><span class="chip"></span>凯利<div class="cards" style="margin-top:6px"><span class="card">3</span><span class="card">7</span><span class="card r">K</span><span class="card">10</span><span class="card r">2</span></div><em class="loss">−8 · 744</em></div>
+            <div class="seat" style="border-color:#e8a54a"><span class="chip"></span>你<div class="cards" style="margin-top:6px"><span class="card r">5</span><span class="card">Q</span><span class="card">5</span><span class="card r">9</span><span class="card">A</span></div><em class="loss">−10 · 655</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="right">
+        <div>玩家观测净收益率</div>
+        <div class="bigfig">−4.31%</div>
+        <svg viewBox="0 0 300 140" width="100%" style="margin:10px 0">
+          <line x1="0" y1="40" x2="300" y2="40" stroke="#3a3a30" stroke-dasharray="3 3"/>
+          <path fill="none" stroke="#e8a54a" stroke-width="1.6" d="M0 40 L30 34 L60 44 L90 38 L120 52 L150 48 L180 63 L210 70 L240 66 L270 82 L300 90"/>
+          <path fill="none" stroke="#ff7a57" stroke-width="1.6" d="M0 40 L30 30 L60 22 L90 48 L120 60 L150 92 L170 138"/>
+          <path fill="none" stroke="#6fd3b5" stroke-width="1.6" opacity=".7" d="M0 40 L30 46 L60 40 L90 55 L120 50 L150 58 L180 72 L210 66 L240 80 L270 86 L300 104"/>
+        </svg>
+        <div class="row"><span>零和校验</span><b style="color:#6fd3b5">通过 0.00</b></div>
+        <div class="row"><span>庄家累计</span><b style="color:#e8a54a">+3,412</b></div>
+        <div class="row"><span>已破产</span><b>2 人</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="tag-row"><i>感受：真实赌场的诱惑感 + 慢慢熄灭的余烬隐喻</i><i>风险：做得太好看会反过来美化赌博</i><i>适合：想要“游戏感”、给大众玩家</i></div>
+  <div class="swatches"><span style="background:#0b0f0d"></span><span style="background:#1f4a3a"></span><span style="background:#e8a54a"></span><span style="background:#ff7a57"></span><span style="background:#6fd3b5"></span></div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="dir">
+  <div class="dir-label"><b>C</b><span>褪色霓虹 · 90 年代港式警世片</span><small>怀旧 / 讽刺 / 有记忆点</small></div>
+  <div class="frame c">
+    <div class="top"><b>概率余烬</b><span class="sign">● 营业中 · 03:42</span><span style="color:#f4d35e">本档只收虚拟点数</span></div>
+    <div class="scene">
+      <div class="left">
+        <div class="felt">
+          <div class="dealer">荷官 阿 May · 牛七 ×2</div>
+          <div class="cards"><span class="card">K</span><span class="card r">7</span><span class="card">3</span><span class="card r">J</span><span class="card">Q</span></div>
+          <div class="banner">十赌九输 · 久赌必输</div>
+          <div class="seats">
+            <div class="seat">平注<div class="cards" style="margin-top:6px"><span class="card">2</span><span class="card r">8</span><span class="card">K</span><span class="card">5</span><span class="card r">Q</span></div><em class="loss">−20 812</em></div>
+            <div class="seat">马丁<div class="cards" style="margin-top:6px"><span class="card r">A</span><span class="card">9</span><span class="card">J</span><span class="card r">4</span><span class="card">6</span></div><em class="win">+40 1066</em></div>
+            <div class="seat dead">豪客<div style="margin-top:12px">走佬咗</div><em>#217</em></div>
+            <div class="seat">凯利<div class="cards" style="margin-top:6px"><span class="card">3</span><span class="card">7</span><span class="card r">K</span><span class="card">10</span><span class="card r">2</span></div><em class="loss">−8 744</em></div>
+            <div class="seat" style="border-color:#f4d35e">你<div class="cards" style="margin-top:6px"><span class="card r">5</span><span class="card">Q</span><span class="card">5</span><span class="card r">9</span><span class="card">A</span></div><em class="loss">−10 655</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="right">
+        <div>观测净收益率</div>
+        <div class="bigfig">−4.31%</div>
+        <svg viewBox="0 0 300 140" width="100%" style="margin:10px 0; background:#15121c">
+          <line x1="0" y1="40" x2="300" y2="40" stroke="#3a3346" stroke-dasharray="3 3"/>
+          <path fill="none" stroke="#f4d35e" stroke-width="2" d="M0 40 H30 V34 H60 V44 H90 V38 H120 V52 H150 V48 H180 V63 H210 V70 H240 V66 H270 V82 H300 V90"/>
+          <path fill="none" stroke="#ff5d7a" stroke-width="2" d="M0 40 H30 V30 H60 V22 H90 V48 H120 V60 H150 V92 H170 V138"/>
+          <path fill="none" stroke="#5ef0d2" stroke-width="2" d="M0 40 H30 V46 H60 V40 H90 V55 H120 V50 H150 V58 H180 V72 H210 V66 H240 V80 H270 V86 H300 V104"/>
+        </svg>
+        <div class="row"><span>零和校验</span><b style="color:#5ef0d2">OK 0.00</b></div>
+        <div class="row"><span>庄家累计</span><b style="color:#f4d35e">+3412</b></div>
+        <div class="row"><span>已破产</span><b style="color:#ff5d7a">2 人</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="tag-row"><i>感受：老赌档 + 警世标语，带黑色幽默</i><i>风险：风格强，粤语梗对非粤语用户可能隔阂</i><i>适合：想做出辨识度、适合社交传播</i></div>
+  <div class="swatches"><span style="background:#15121c"></span><span style="background:#ff5d7a"></span><span style="background:#5ef0d2"></span><span style="background:#f4d35e"></span><span style="background:#1d3b33"></span></div>
+</section>
+
+</body>
+</html>

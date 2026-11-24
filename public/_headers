@@ -1,0 +1,14 @@
+# Headers for static files. Workers Static Assets serves these before the Worker runs,
+# so page responses get their headers (including the CSP) in worker/index.ts instead.
+# vinext copies this file to dist/client/_headers and then skips generating its own,
+# so the immutable cache rule for /assets/* has to live here too.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Frame-Options: SAMEORIGIN
+
+# Content-hashed build output: safe to cache forever
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
