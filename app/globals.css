@@ -600,3 +600,10 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* 上局输赢：座位铭牌底部一行 + 庄家结果条尾部 */
+.pe-plaque__last { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
+.pe-plaque__last b, .pe-dealer-last b { font: 700 12px var(--num); font-variant-numeric: tabular-nums; color: #e6dcc4; }
+.pe-plaque__last b.is-win, .pe-dealer-last b.is-win { color: #a9e6cc; }
+.pe-plaque__last b.is-loss, .pe-dealer-last b.is-loss { color: #f0a08c; }
+.pe-result .pe-dealer-last { padding-right: 8px; font-size: 11px; color: var(--muted); }

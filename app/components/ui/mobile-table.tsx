@@ -1,5 +1,5 @@
 import { Hand, type HandCard, type HandDeal } from "./hand";
-import { Avatar, EmptySeat, Plaque, type PlaqueData } from "./plaque";
+import { Avatar, DealerLast, EmptySeat, Plaque, type PlaqueData } from "./plaque";
 
 /**
  * 手机竖屏用的竖向牌桌（设计定稿 design/mobile-v1.html）：
@@ -25,6 +25,8 @@ export function MobileTable({
   onSeatClick,
   waitingText = "本局还没发牌",
   dealFor,
+  dealerLastDelta = null,
+  lastTag = "本局",
 }: {
   dealerName: string;
   dealerNote?: string;
@@ -38,6 +40,10 @@ export function MobileTable({
   onSeatClick: (index: number) => void;
   /** 发牌动画参数（座位号，庄家为 -1）；不传则不播 */
   dealFor?: (seatIndex: number) => HandDeal | null;
+  /** 庄家上局输赢；还没打过就 null */
+  dealerLastDelta?: number | null;
+  /** 输赢前缀（本局 / 上局） */
+  lastTag?: string;
 }) {
   const cell = (seat: SeatModel, wide: boolean) => (
     <div key={seat.index} className={`pe-mseat ${wide ? "pe-mseat--wide" : ""} ${seat.plaque ? "" : "pe-mseat--empty"}`} data-n={`0${seat.index + 1}`}>
@@ -86,6 +92,7 @@ export function MobileTable({
             <div className="pe-result">
               {formula && <em>{formula}</em>}
               <b>{dealerResult ? `庄 · ${dealerResult}` : waitingText}</b>
+              {dealerLastDelta !== null && <DealerLast delta={dealerLastDelta} tag={lastTag} />}
             </div>
             <div className="pe-mtable__print" aria-hidden="true">
               <div>牛牛 ×5 · 牛九 ×4 · 牛八 ×3 · 牛七 ×2</div>

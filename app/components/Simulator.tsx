@@ -27,7 +27,7 @@ import { FeltTable, SEAT_ANGLES, SeatAnchor, STAGE_W, seatPoint } from "./ui/fel
 import { Hand, handFormula, type HandDeal } from "./ui/hand";
 import { MobileTable, type SeatModel } from "./ui/mobile-table";
 import { BetPanel, RebuyPanel, RoundLog, SeatSettings, type BetField } from "./ui/panels";
-import { Avatar, EmptySeat, Plaque, formatSigned, type PlaqueData } from "./ui/plaque";
+import { Avatar, DealerLast, EmptySeat, Plaque, formatSigned, type PlaqueData } from "./ui/plaque";
 import { Lobby, type LobbyTable } from "./ui/lobby";
 import { EntryPanel, LifetimeLedger, planText, type EntryCandidate, type LedgerRow } from "./ui/visit";
 
@@ -895,6 +895,9 @@ export default function Simulator() {
   const dealerFormula = dealerView ? handFormula(dealerView.cards, dealerView.label) : null;
   const showingSettled = !table.roundCtx;
   const settlementBySeat = new Map(lastSettlements.map((item) => [item.seatIndex, item]));
+  // 开牌后显示本局输赢，一直留到下次开牌：玩家各自的 delta；庄家按零和取全部玩家之和的相反数。
+  const lastTag = showingSettled ? "本局" : "上局";
+  const dealerLastDelta = lastSettlements.length ? -lastSettlements.reduce((sum, item) => sum + item.delta, 0) : null;
   const bets = table.roundCtx ? betsOf(table.roundCtx.actions) : lastBets;
   const humanPending =
     table.phase === "awaiting_bets"
@@ -934,6 +937,8 @@ export default function Simulator() {
       manual: seat.control.kind === "human",
       won: Boolean(settlement && settlement.delta > 0),
       broke,
+      lastDelta: settlementBySeat.get(index)?.delta ?? null,
+      lastTag,
     };
   };
 
@@ -1243,6 +1248,8 @@ export default function Simulator() {
               dealerNote={`${viewIndex + 1} 号桌 · ${game.meta.name}`}
               dealerCards={dealerView?.cards ?? null}
               dealerResult={dealerResult}
+              dealerLastDelta={dealerLastDelta}
+              lastTag={lastTag}
               waitingText={dealerWaiting ?? "等待开局"}
               formula={dealerFormula}
               seats={seatModels}
@@ -1264,6 +1271,7 @@ export default function Simulator() {
               <div className="pe-anchor pe-result pe-result--table">
                 {dealerFormula && <em>{dealerFormula}</em>}
                 <b>{dealerResult ? `庄 · ${dealerResult}` : (dealerWaiting ?? "等待开局")}</b>
+                {dealerLastDelta !== null && <DealerLast delta={dealerLastDelta} tag={lastTag} />}
               </div>
               {seatModels.map((model) => {
                 const bet = bets[model.index];

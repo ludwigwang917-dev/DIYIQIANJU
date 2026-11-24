@@ -19,6 +19,10 @@ export interface PlaqueData {
   won: boolean;
   /** 输光、等待补仓/离席决定 */
   broke: boolean;
+  /** 最近一次开牌这个座位的输赢（开牌后一直显示到下次开牌）；没参与就 null */
+  lastDelta: number | null;
+  /** 输赢前缀：刚开牌时“本局”，下一局开牌前“上局” */
+  lastTag: string;
 }
 
 export function formatSigned(value: number) {
@@ -78,6 +82,11 @@ export function Plaque({
             {data.badge && <span className={`pe-mult pe-mult--${data.badge.tone}`}>{data.badge.text}</span>}
           </span>
         </span>
+        {data.lastDelta !== null && (
+          <span className="pe-plaque__last">
+            {data.lastTag} <b className={data.lastDelta > 0 ? "is-win" : data.lastDelta < 0 ? "is-loss" : ""}>{formatSigned(data.lastDelta)}</b>
+          </span>
+        )}
       </span>
     </button>
   );
@@ -101,5 +110,14 @@ export function EmptySeat({ seatNumber, onClick, compact = false }: { seatNumber
         <span className="pe-plaque__hint">点击请人入座</span>
       </span>
     </button>
+  );
+}
+
+/** 庄家最近一次开牌的输赢（跟在庄家结果条后面）。 */
+export function DealerLast({ delta, tag }: { delta: number; tag: string }) {
+  return (
+    <span className="pe-dealer-last">
+      庄{tag} <b className={delta > 0 ? "is-win" : delta < 0 ? "is-loss" : ""}>{formatSigned(delta)}</b>
+    </span>
   );
 }
