@@ -1,4 +1,4 @@
-import { Hand, type HandCard } from "./hand";
+import { Hand, type HandCard, type HandDeal } from "./hand";
 import { Avatar, EmptySeat, Plaque, type PlaqueData } from "./plaque";
 
 /**
@@ -24,6 +24,7 @@ export function MobileTable({
   onDealerClick,
   onSeatClick,
   waitingText = "本局还没发牌",
+  dealFor,
 }: {
   dealerName: string;
   dealerNote?: string;
@@ -35,6 +36,8 @@ export function MobileTable({
   seats: SeatModel[];
   onDealerClick: () => void;
   onSeatClick: (index: number) => void;
+  /** 发牌动画参数（座位号，庄家为 -1）；不传则不播 */
+  dealFor?: (seatIndex: number) => HandDeal | null;
 }) {
   const cell = (seat: SeatModel, wide: boolean) => (
     <div key={seat.index} className={`pe-mseat ${wide ? "pe-mseat--wide" : ""} ${seat.plaque ? "" : "pe-mseat--empty"}`} data-n={`0${seat.index + 1}`}>
@@ -48,6 +51,7 @@ export function MobileTable({
             spacing={wide ? 6 : -12}
             gap={wide ? 6 : 17}
             className="pe-mseat__hand"
+            deal={dealFor?.(seat.index)}
           />
           <Plaque data={seat.plaque} seatNumber={seat.index + 1} onClick={() => onSeatClick(seat.index)} compact />
         </>
@@ -78,7 +82,7 @@ export function MobileTable({
               <b>荷官 · {dealerName}</b>
               {dealerNote && <small>{dealerNote}</small>}
             </button>
-            <Hand cards={dealerCards} label={dealerResult} width={50} spacing={6} gap={14} className="pe-mtable__dealer" />
+            <Hand cards={dealerCards} label={dealerResult} width={50} spacing={6} gap={14} className="pe-mtable__dealer" deal={dealFor?.(-1)} />
             <div className="pe-result">
               {formula && <em>{formula}</em>}
               <b>{dealerResult ? `庄 · ${dealerResult}` : waitingText}</b>

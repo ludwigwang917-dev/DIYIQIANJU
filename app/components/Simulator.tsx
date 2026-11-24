@@ -23,13 +23,31 @@ import "@/lib/games/niuniu";
 import { PLAYER_PROFILES } from "@/lib/games/niuniu/profiles";
 import type { NiuniuView } from "@/lib/games/niuniu/view";
 import { ChipStack } from "./ui/chips";
-import { FeltTable, SeatAnchor, STAGE_W, seatPoint } from "./ui/felt-table";
-import { Hand, handFormula } from "./ui/hand";
+import { FeltTable, SEAT_ANGLES, SeatAnchor, STAGE_W, seatPoint } from "./ui/felt-table";
+import { Hand, handFormula, type HandDeal } from "./ui/hand";
 import { MobileTable, type SeatModel } from "./ui/mobile-table";
 import { BetPanel, RebuyPanel, RoundLog, SeatSettings, type BetField } from "./ui/panels";
 import { Avatar, EmptySeat, Plaque, formatSigned, type PlaqueData } from "./ui/plaque";
 import { Lobby, type LobbyTable } from "./ui/lobby";
 import { EntryPanel, LifetimeLedger, planText, type EntryCandidate, type LedgerRow } from "./ui/visit";
+
+/** 牌靴出牌口在桌面舞台上的坐标（见 table.css 的 .pe-shoe）。 */
+const SHOE_MOUTH: [number, number] = [902, 162];
+
+/**
+ * 发牌动画节奏（毫秒）。8× 自动跑时不播，单步时按 3× 播。
+ * AUTO_DELAY 是自动模式每局间隔，要留够发牌 + 翻牌 + 看一眼的时间。
+ */
+const DEAL_TIMING = {
+  1: { step: 40, flight: 360, flip: 260 },
+  3: { step: 12, flight: 220, flip: 180 },
+} as const;
+const AUTO_DELAY = { 1: 2700, 3: 1000, 8: 150 } as const;
+
+function dealTiming(speed: 1 | 3 | 8, running: boolean) {
+  if (running && speed === 8) return null;
+  return DEAL_TIMING[speed === 1 ? 1 : 3];
+}
 
 /** 资金曲线每位赌客一条线的颜色（与牌桌铭牌同一套暖色） */
 const LINE_COLORS = ["#cfc4a8", "#7fcfae", "#e27a62", "#8fa7c7", "#d9b46a"];
@@ -595,7 +613,7 @@ export default function Simulator() {
 
   useEffect(() => {
     if (!running) return;
-    const delay = speed === 1 ? 1100 : speed === 3 ? 420 : 150;
+    const delay = AUTO_DELAY[speed];
     const timer = window.setInterval(() => onAutoTick(), delay);
     return () => window.clearInterval(timer);
   }, [running, speed]);
@@ -931,6 +949,48 @@ export default function Simulator() {
     };
   });
 
+  // ---------- 发牌动画（纯显示）：新一局时牌从牌靴一张张飞向各家，发完一起翻开 ----------
+  const dealOrder = [...seatModels.filter((model) => model.plaque && model.cards).map((model) => model.index), -1];
+  const dealRevealed = Boolean(dealerView?.cards?.length && dealerView.cards.every((card) => card.faceUp));
+  const dealKey = `${viewIndex}:${table.roundCtx ? table.round : lastRound}`;
+  const [dealSeen, setDealSeen] = useState(dealKey);
+  const [dealActive, setDealActive] = useState<{ key: string; revealed: boolean } | null>(null);
+  if (dealSeen !== dealKey) {
+    // 换桌观看、重置时不播；同一张桌开了新的一局才播。
+    const sameTable = dealSeen.split(":")[0] === String(viewIndex);
+    setDealSeen(dealKey);
+    setDealActive(sameTable && dealTiming(speed, running) ? { key: dealKey, revealed: dealRevealed } : null);
+  }
+  const timing = dealTiming(speed, running);
+  // 手动下注后亮牌会重新挂载牌面，此时不再重播飞牌。
+  const dealing = Boolean(timing && dealActive && dealActive.key === dealKey && dealActive.revealed === dealRevealed);
+  const dealFor = (seatIndex: number, mobile: boolean): HandDeal | null => {
+    if (!dealing || !timing) return null;
+    const position = dealOrder.indexOf(seatIndex);
+    if (position < 0) return null;
+    const count = dealOrder.length;
+    const base = {
+      first: position * timing.step,
+      every: count * timing.step,
+      flight: timing.flight,
+      flipAt: (5 * count - 1) * timing.step + timing.flight + 120,
+      flip: timing.flip,
+    };
+    if (mobile) return { ...base, from: [0, seatIndex < 0 ? -70 : -220], fromRotate: -12 };
+    if (seatIndex < 0) return { ...base, from: [SHOE_MOUTH[0] - 560, SHOE_MOUTH[1] - 168], fromRotate: -10 };
+    const [cx, cy] = seatPoint(seatIndex, "hand");
+    const angle = SEAT_ANGLES[seatIndex] ?? 0;
+    const dx = SHOE_MOUTH[0] - cx;
+    const dy = SHOE_MOUTH[1] - cy;
+    const rad = (angle * Math.PI) / 180;
+    // 座位手牌整体旋转了 −angle 度，把屏幕上的位移换回它自己的坐标系。
+    return {
+      ...base,
+      from: [Math.cos(rad) * dx - Math.sin(rad) * dy, Math.sin(rad) * dx + Math.cos(rad) * dy],
+      fromRotate: angle - 10,
+    };
+  };
+
   const settingsIndex = settingsSeat ?? -1;
   const settingsTarget = table.seats[settingsIndex] ?? null;
   const settingsStyle = (): CSSProperties => {
@@ -1188,6 +1248,7 @@ export default function Simulator() {
               seats={seatModels}
               onDealerClick={rotateDealer}
               onSeatClick={openSeat}
+              dealFor={(seatIndex) => dealFor(seatIndex, true)}
             />
           ) : (
             <FeltTable oddsText={ODDS_TEXT} boxLabels={["前注", "后注"]}>
@@ -1198,7 +1259,7 @@ export default function Simulator() {
                 </b>
               </button>
               <div className="pe-anchor pe-dealer-hand">
-                <Hand cards={dealerView?.cards} label={dealerView?.label} width={58} spacing={8} gap={14} />
+                <Hand cards={dealerView?.cards} label={dealerView?.label} width={58} spacing={8} gap={14} deal={dealFor(-1, false)} />
               </div>
               <div className="pe-anchor pe-result pe-result--table">
                 {dealerFormula && <em>{dealerFormula}</em>}
@@ -1210,7 +1271,7 @@ export default function Simulator() {
                   <div key={model.index}>
                     {model.plaque && model.cards && (
                       <SeatAnchor seatIndex={model.index} ring="hand" rotate>
-                        <Hand cards={model.cards} label={model.label} lost={model.lost} width={46} spacing={-28} gap={6} fan={4} />
+                        <Hand cards={model.cards} label={model.label} lost={model.lost} width={46} spacing={-28} gap={6} fan={4} deal={dealFor(model.index, false)} />
                       </SeatAnchor>
                     )}
                     {model.plaque && bet && (

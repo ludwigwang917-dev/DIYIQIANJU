@@ -289,3 +289,40 @@
 @media (prefers-reduced-motion: reduce) {
   .pe-chipbtn { transition: none; }
 }
+
+/* ---------- 发牌动画：牌从牌靴飞到各家，扣着落下，发完一起翻开（纯显示） ---------- */
+.pe-dealt {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: top;
+  transform-origin: 50% 120%;
+  animation: pe-deal-fly var(--fly) cubic-bezier(0.2, 0.7, 0.25, 1) var(--fly-delay) both;
+}
+.pe-dealt--flip {
+  animation:
+    pe-deal-fly var(--fly) cubic-bezier(0.2, 0.7, 0.25, 1) var(--fly-delay) both,
+    pe-deal-flip var(--flip) ease-in-out var(--flip-delay) both;
+}
+.pe-dealt > .pe-card { display: block; }
+.pe-dealt__back.pe-card {
+  position: absolute;
+  inset: 0;
+  animation: pe-deal-hide 1ms linear var(--hide-at) forwards;
+}
+@keyframes pe-deal-fly {
+  0% { translate: var(--dx) var(--dy); rotate: var(--rot); opacity: 0; }
+  8% { opacity: 1; }
+  100% { translate: 0 0; rotate: 0deg; opacity: 1; }
+}
+@keyframes pe-deal-flip {
+  0% { scale: 1 1; }
+  50% { scale: 0 1.06; }
+  100% { scale: 1 1; }
+}
+@keyframes pe-deal-hide { to { visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pe-dealt, .pe-dealt--flip { animation: none; }
+  .pe-dealt__back.pe-card { display: none; }
+}
