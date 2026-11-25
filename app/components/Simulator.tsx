@@ -36,6 +36,7 @@ import { FeltTable, SEAT_ANGLES, SeatAnchor, STAGE_W, seatPoint } from "./ui/fel
 import { Hand, handFormula, type HandDeal } from "./ui/hand";
 import { MobileTable, type SeatModel } from "./ui/mobile-table";
 import { BetPanel, RebuyPanel, RoundLog, SeatSettings, type BetField } from "./ui/panels";
+import { SeatControl } from "./ui/seat-control";
 import { Avatar, DealerLast, EmptySeat, Plaque, formatSigned, type PlaqueData } from "./ui/plaque";
 import { Leaderboard, useLeaderboardSync } from "./ui/leaderboard";
 import { Lobby, type LobbyTable } from "./ui/lobby";
@@ -492,6 +493,9 @@ export default function Simulator() {
   const [rebuyOffers, setRebuyOffers] = useState<Record<number, boolean>>({});
   const [mcRebuy, setMcRebuy] = useState(false);
   const [settingsSeat, setSettingsSeat] = useState<number | null>(null);
+  // 底部控制栏正在设置的座位（点铭牌也会切过去），以及每个座位上次托管用的策略
+  const [ctrlSeat, setCtrlSeat] = useState<number | null>(null);
+  const [lastAutoBySeat, setLastAutoBySeat] = useState<Record<number, string>>({});
   const [entrySeat, setEntrySeat] = useState<number | null>(null);
   // 策略编辑器：存在这个浏览器里的策略、正在编辑的那一份、分享链接带来的提示
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
@@ -533,6 +537,7 @@ export default function Simulator() {
     viewRef.current = index;
     setViewIndex(index);
     setSettingsSeat(null);
+    setCtrlSeat(null);
     setEntrySeat(null);
     setRebuyOffers({});
   };
@@ -769,6 +774,10 @@ export default function Simulator() {
   };
 
   const setSeatControl = (seatIndex: number, control: Seat["control"]) => {
+    // 记住这个座位托管用的策略：切到手动再切回来时接着用它
+    const before = tableRef.current.seats[seatIndex]?.control;
+    const remembered = control.kind === "auto" ? control.strategyId : before?.kind === "auto" ? before.strategyId : null;
+    if (remembered) setLastAutoBySeat((current) => ({ ...current, [seatIndex]: remembered }));
     tryCommit(
       (current) =>
         dispatch(current, { type: "table/set_control", seatIndex, control }, Math.random),
@@ -942,6 +951,7 @@ export default function Simulator() {
       return;
     }
     setEntrySeat(null);
+    setCtrlSeat(seatIndex);
     setSettingsSeat((current) => (current === seatIndex ? null : seatIndex));
   };
 
@@ -1099,13 +1109,8 @@ export default function Simulator() {
       seatNumber={settingsIndex + 1}
       name={settingsTarget.name}
       net={settingsTarget.bankroll - settingsTarget.totalBuyIn}
-      control={settingsTarget.control}
-      strategies={strategies.map((item) => ({ id: item.id, name: item.name, short: item.short }))}
-      customStrategies={customOptions}
-      onEditCustom={(id) => openEditor(id)}
-      onNewCustom={() => openEditor(null)}
+      modeText={settingsTarget.control.kind === "auto" ? `托管 · ${strategyName(settingsTarget.control.strategyId)}` : "手动"}
       editable={table.phase === "idle"}
-      onSetControl={(control) => setSeatControl(settingsIndex, control)}
       onReplace={() => {
         replace(settingsIndex);
         setSettingsSeat(null);
@@ -1129,6 +1134,38 @@ export default function Simulator() {
   const entryOpen = entrySeat !== null && !table.seats[entryIndex];
   const youAt = seatOf(casino, YOU.personId);
   const youSeat = youAt ? casino[youAt.tableIndex].seats[youAt.seatIndex] : null;
+
+  // ---------- 底部控制栏：选中座位的托管 / 手动与策略 ----------
+  const occupiedSeats = table.seats.flatMap((seat, index) => (seat ? [{ index, name: seat.name }] : []));
+  const youIndexHere = youAt && youAt.tableIndex === viewIndex ? youAt.seatIndex : -1;
+  const ctrlIndex =
+    ctrlSeat !== null && table.seats[ctrlSeat]
+      ? ctrlSeat
+      : youIndexHere >= 0
+        ? youIndexHere
+        : occupiedSeats[0]?.index ?? -1;
+  const ctrlTarget = table.seats[ctrlIndex] ?? null;
+  const seatControlElement = (compact: boolean) =>
+    ctrlTarget ? (
+      <SeatControl
+        seats={occupiedSeats}
+        seatIndex={ctrlIndex}
+        onPickSeat={setCtrlSeat}
+        control={ctrlTarget.control}
+        lastAuto={
+          ctrlTarget.control.kind === "auto"
+            ? ctrlTarget.control.strategyId
+            : lastAutoBySeat[ctrlIndex] ?? strategies[0]?.id ?? "flat"
+        }
+        strategies={strategies.map((item) => ({ id: item.id, name: item.name }))}
+        customStrategies={customOptions.map((item) => ({ id: item.id, name: item.name }))}
+        editable={table.phase === "idle"}
+        onSetControl={(control) => setSeatControl(ctrlIndex, control)}
+        onEditCustom={(id) => openEditor(id)}
+        onNewCustom={() => openEditor(null)}
+        compact={compact}
+      />
+    ) : null;
   const youCandidate: EntryCandidate[] =
     youAt && youAt.tableIndex === viewIndex
       ? []
@@ -1346,6 +1383,7 @@ export default function Simulator() {
               seats={seatModels}
               onDealerClick={rotateDealer}
               onSeatClick={openSeat}
+              selectedSeat={ctrlIndex}
               dealFor={(seatIndex) => dealFor(seatIndex, true)}
             />
           ) : (
@@ -1404,7 +1442,7 @@ export default function Simulator() {
                         <StrategyBubble note={strategyNoteFor(model.index)!} variables={variables} />
                       )}
                       {model.plaque ? (
-                        <Plaque data={model.plaque} seatNumber={model.index + 1} onClick={() => openSeat(model.index)} />
+                        <Plaque data={model.plaque} seatNumber={model.index + 1} onClick={() => openSeat(model.index)} selected={model.index === ctrlIndex} />
                       ) : (
                         <EmptySeat seatNumber={model.index + 1} onClick={() => openSeat(model.index)} />
                       )}
@@ -1440,6 +1478,7 @@ export default function Simulator() {
                   </button>
                 ))}
               </div>
+              {seatControlElement(false)}
             </div>
           )}
           {(!hasPanel || isMobile) && noticeElement}
@@ -1744,6 +1783,7 @@ export default function Simulator() {
 
       {isMobile && (
         <div className="pe-dock">
+          {seatControlElement(true)}
           <button className="pe-btn pe-btn--primary" onClick={toggleRunning}>
             {running ? "Ⅱ　暂停" : table.round === 0 ? "▶　开始" : "▶　继续"}
           </button>

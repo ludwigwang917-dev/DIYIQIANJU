@@ -47,11 +47,14 @@ export function Plaque({
   seatNumber,
   onClick,
   compact = false,
+  selected = false,
 }: {
   data: PlaqueData;
   seatNumber: number;
   onClick?: () => void;
   compact?: boolean;
+  /** 底部控制栏正在设置这个座位 */
+  selected?: boolean;
 }) {
   const classes = [
     "pe-plaque",
@@ -59,12 +62,14 @@ export function Plaque({
     data.manual ? "pe-plaque--manual" : "",
     data.won ? "pe-plaque--won" : "",
     data.broke ? "pe-plaque--broke" : "",
+    selected ? "pe-plaque--selected" : "",
   ].join(" ");
   return (
     <button
       type="button"
       className={classes}
       onClick={onClick}
+      aria-pressed={selected}
       aria-label={`${seatNumber} 号座 ${data.name}，${data.tag}，总输赢 ${formatSigned(data.net)}。点击设置座位`}
     >
       <Avatar name={data.name} size={compact ? 26 : 36} />

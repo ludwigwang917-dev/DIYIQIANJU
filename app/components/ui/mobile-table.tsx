@@ -27,6 +27,7 @@ export function MobileTable({
   seats,
   onDealerClick,
   onSeatClick,
+  selectedSeat = -1,
   waitingText = "本局还没发牌",
   dealFor,
   dealerLastDelta = null,
@@ -44,6 +45,8 @@ export function MobileTable({
   seats: SeatModel[];
   onDealerClick: () => void;
   onSeatClick: (index: number) => void;
+  /** 底部控制栏正在设置的座位 */
+  selectedSeat?: number;
   /** 发牌动画参数（座位号，庄家为 -1）；不传则不播 */
   dealFor?: (seatIndex: number) => HandDeal | null;
   /** 庄家上局输赢；还没打过就 null */
@@ -66,7 +69,7 @@ export function MobileTable({
             deal={dealFor?.(seat.index)}
           />
           {seat.note}
-          <Plaque data={seat.plaque} seatNumber={seat.index + 1} onClick={() => onSeatClick(seat.index)} compact />
+          <Plaque data={seat.plaque} seatNumber={seat.index + 1} onClick={() => onSeatClick(seat.index)} compact selected={seat.index === selectedSeat} />
         </>
       ) : (
         <>

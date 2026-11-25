@@ -286,17 +286,12 @@ export function SeatSettings({
   seatNumber,
   name,
   net,
-  control,
-  strategies,
-  customStrategies = [],
-  onEditCustom,
-  onNewCustom,
+  visitText,
+  modeText,
   editable,
-  onSetControl,
   onReplace,
   onLeave,
   onClose,
-  visitText,
   style,
   sheet,
 }: {
@@ -305,15 +300,10 @@ export function SeatSettings({
   net: number;
   /** 这一趟带了多少、离场计划、已玩局数 */
   visitText?: string;
-  control: { kind: "human" } | { kind: "auto"; strategyId: string };
-  strategies: StrategyOption[];
-  /** 策略编辑器里搭的、存在这个浏览器里的策略 */
-  customStrategies?: StrategyOption[];
-  onEditCustom?: (id: string) => void;
-  onNewCustom?: () => void;
+  /** “托管 · 策略名”或“手动”；改在底部控制栏 */
+  modeText: string;
   /** 只有两局之间才能改 */
   editable: boolean;
-  onSetControl: (control: { kind: "human" } | { kind: "auto"; strategyId: string }) => void;
   onReplace: () => void;
   onLeave: () => void;
   onClose: () => void;
@@ -321,14 +311,16 @@ export function SeatSettings({
   sheet?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [lastAuto, setLastAuto] = useState(control.kind === "auto" ? control.strategyId : strategies[0]?.id ?? "");
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     const onDown = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
+      const target = event.target as Element;
+      // 点底部控制栏里的座位控制不关弹层，方便边看边改
+      if (target.closest?.(".pe-seatctl")) return;
+      if (ref.current && !ref.current.contains(target)) onClose();
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
@@ -348,89 +340,12 @@ export function SeatSettings({
         </span>
         <span className={net > 0 ? "is-win" : net < 0 ? "is-loss" : ""}>总输赢 {formatSigned(net)}</span>
       </h4>
-      {!editable && <p className="pe-pop__lock">牌局进行中，下一局开始前才能修改。</p>}
-      <div className="pe-seg pe-mode-seg" role="radiogroup" aria-label="谁来下注">
-        <button
-          type="button"
-          role="radio"
-          aria-checked={control.kind === "auto"}
-          className={control.kind === "auto" ? "is-on" : ""}
-          disabled={!editable}
-          onClick={() => onSetControl({ kind: "auto", strategyId: lastAuto })}
-        >
-          <b>托管</b>
-          <small>按策略自动下注</small>
-        </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={control.kind === "human"}
-          className={control.kind === "human" ? "is-on" : ""}
-          disabled={!editable}
-          onClick={() => onSetControl({ kind: "human" })}
-        >
-          <b>手动</b>
-          <small>你自己点筹码下注</small>
-        </button>
-      </div>
+      <p className="pe-pop__mode">
+        {modeText}
+        <small>托管 / 手动和策略在底部控制栏里改</small>
+      </p>
       {visitText && <p className="pe-pop__visit">{visitText}</p>}
-      <ul className={`pe-pop__list ${control.kind === "human" ? "is-muted" : ""}`}>
-        {strategies.map((strategy) => {
-          const on = control.kind === "auto" && control.strategyId === strategy.id;
-          return (
-            <li key={strategy.id}>
-              <button
-                type="button"
-                className={on ? "is-on" : ""}
-                disabled={!editable}
-                onClick={() => {
-                  setLastAuto(strategy.id);
-                  onSetControl({ kind: "auto", strategyId: strategy.id });
-                }}
-              >
-                <span>{strategy.name}</span>
-                <small>{strategy.short}</small>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {(customStrategies.length > 0 || onNewCustom) && (
-        <div className={`pe-pop__mine ${control.kind === "human" ? "is-muted" : ""}`}>
-          <span className="pe-label">我的策略</span>
-          <ul className="pe-pop__list">
-            {customStrategies.map((strategy) => {
-              const on = control.kind === "auto" && control.strategyId === strategy.id;
-              return (
-                <li key={strategy.id} className="pe-pop__custom">
-                  <button
-                    type="button"
-                    className={on ? "is-on" : ""}
-                    disabled={!editable}
-                    onClick={() => {
-                      setLastAuto(strategy.id);
-                      onSetControl({ kind: "auto", strategyId: strategy.id });
-                    }}
-                  >
-                    <span>{strategy.name}</span>
-                    <small>{strategy.short}</small>
-                  </button>
-                  {onEditCustom && (
-                    <button type="button" className="pe-pop__edit" onClick={() => onEditCustom(strategy.id)} aria-label={`编辑「${strategy.name}」`}>
-                      改
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          {onNewCustom && (
-            <button type="button" className="pe-link-btn" onClick={onNewCustom}>
-              ＋ 搭一个新策略
-            </button>
-          )}
-        </div>
-      )}
+      {!editable && <p className="pe-pop__lock">牌局进行中，下一局开始前才能修改。</p>}
       <div className="pe-pop__acts">
         <button type="button" className="pe-btn" disabled={!editable} onClick={onReplace}>
           换一位赌客
