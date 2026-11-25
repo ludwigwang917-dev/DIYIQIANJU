@@ -1,5 +1,6 @@
 import { playAutoRound } from "./auto-play.ts";
 import { mulberry32 } from "./rng.ts";
+import { registerRuleStrategy } from "./rules/compile.ts";
 import { createTable } from "./table.ts";
 import type { LeaveReason, VisitPlan } from "./types.ts";
 
@@ -12,6 +13,11 @@ export interface MonteCarloRequest {
   seed?: number;
   /** Let the player randomly rebuy instead of leaving (AUTO_REBUY in auto-play.ts). */
   rebuy?: boolean;
+  /**
+   * A strategy built in the strategy editor. When given, it is compiled and registered under
+   * `strategyId` first (a worker cannot see strategies registered on the page).
+   */
+  rules?: unknown;
 }
 
 export interface MonteCarloResult {
@@ -39,6 +45,10 @@ export interface MonteCarloResult {
   averageNetLoss: number;
   /** Leave-time histogram, 10 equal buckets over [0, maxRounds]. */
   buckets: number[];
+  /** Average points wagered per run. */
+  averageWagered: number;
+  /** All runs together: points won (+) or lost (−) per point wagered. */
+  netPerPointWagered: number;
 }
 
 function average(values: number[]) {
@@ -56,6 +66,8 @@ export function runMonteCarlo(
 ): MonteCarloResult {
   const { gameId, runs, maxRounds, bankroll, strategyId, seed } = request;
   const rebuy = Boolean(request.rebuy);
+  if (request.rules !== undefined) registerRuleStrategy(request.rules, strategyId);
+  let totalWagered = 0;
   const leaveRounds: number[] = [];
   const endingBankrolls: number[] = [];
   const totalBuyIns: number[] = [];
@@ -82,6 +94,7 @@ export function runMonteCarlo(
       table = playAutoRound(table, strategyId, rng, { rebuy });
     }
 
+    totalWagered += table.totalWagered;
     const seat = table.seats[0];
     if (seat) {
       endingBankrolls.push(seat.bankroll);
@@ -121,6 +134,11 @@ export function runMonteCarlo(
     averageTotalBuyIn: average(totalBuyIns),
     averageNetLoss: average(totalBuyIns.map((total, index) => total - endingBankrolls[index])),
     buckets,
+    averageWagered: totalWagered / runs,
+    netPerPointWagered:
+      totalWagered > 0
+        ? endingBankrolls.reduce((sum, value, index) => sum + value - totalBuyIns[index], 0) / totalWagered
+        : 0,
   };
 }
 

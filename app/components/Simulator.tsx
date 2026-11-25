@@ -5,7 +5,14 @@ import { AUTO_REBUY, applyVisitPlans, fillAutoSeats, resolveBustedSeats } from "
 import { roadMark, seatAt, seatOf, switchTable } from "@/lib/core/casino";
 import { lastLeftRound, lifetimeLedgers } from "@/lib/core/lifetime";
 import type { MonteCarloResult } from "@/lib/core/monte-carlo";
-import { getGame, getStrategies } from "@/lib/core/registry";
+import { getGame, getStrategies, isCustomStrategyId } from "@/lib/core/registry";
+import { decodeShare, shareFromHash } from "@/lib/core/rules/share";
+import type { RuleStrategy } from "@/lib/core/rules/types";
+import { blankStrategy } from "@/lib/games/niuniu/rule-templates";
+import { StrategyEditor } from "./strategy/StrategyEditor";
+import { useVariables } from "./strategy/blocks";
+import { StrategyBubble, StrategyLog, forgetStrategyNotes, recordStrategyDecision, useStrategyNotes } from "./strategy/live";
+import { deleteStrategy, loadSavedStrategies, saveStrategy, type SavedStrategy } from "./strategy/storage";
 import {
   DEALERS,
   bustedSeats,
@@ -56,7 +63,8 @@ const GAME_ID = "niuniu";
 /** The lobby road shows this many recent rounds; the table's public record keeps more. */
 const ROAD_SHOWN = 60;
 /** On the live table, auto seats randomly rebuy (AUTO_REBUY) instead of always leaving. */
-const AUTO_OPTIONS = { rebuy: true } as const;
+// onDecide 只用来在牌桌上显示自定义策略为什么这样下注，不影响下注本身。
+const AUTO_OPTIONS = { rebuy: true, onDecide: recordStrategyDecision };
 const REBUY_RULE_TEXT = `托管赌客每次输到离场时有 ${AUTO_REBUY.probability * 100}% 概率补仓，补初始本金的 ${AUTO_REBUY.minShare * 100}%–${AUTO_REBUY.maxShare * 100}%，最多 ${AUTO_REBUY.maxRebuys} 次`;
 /** 斗牛两个注区的结算说明（只是文案，数值上下限取自游戏层的 actionSpec） */
 const BET_NOTES: Record<string, string> = { front: "×牌型倍数", back: "×1" };
@@ -483,10 +491,22 @@ export default function Simulator() {
   const [mcRebuy, setMcRebuy] = useState(false);
   const [settingsSeat, setSettingsSeat] = useState<number | null>(null);
   const [entrySeat, setEntrySeat] = useState<number | null>(null);
+  // 策略编辑器：存在这个浏览器里的策略、正在编辑的那一份、分享链接带来的提示
+  const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
+  const [editor, setEditor] = useState<{ initial: RuleStrategy; id: string | null; note?: string } | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const isMobile = useIsMobile();
+  const strategyNotes = useStrategyNotes();
+  const variables = useVariables(GAME_ID);
   const game = getGame(GAME_ID);
-  const strategies = getStrategies(GAME_ID);
+  // 预设策略；编辑器里搭的策略注册后也在注册表里，但单独列出
+  const strategies = getStrategies(GAME_ID).filter((item) => !isCustomStrategyId(item.id));
+  const customOptions = savedStrategies.map((item) => ({
+    id: item.id,
+    name: item.strategy.name,
+    short: item.strategy.rules.length ? `${item.strategy.rules.length} 条规则` : "自定义",
+  }));
   const leaderboard = useLeaderboardSync(casino, YOU.personId);
   const pending = pendingSeats(table);
   const minStakeValue = minStake(GAME_ID);
@@ -621,6 +641,40 @@ export default function Simulator() {
   }, [running, speed]);
 
   useEffect(() => () => workerRef.current?.terminate(), []);
+
+  // 读出这个浏览器里存的策略；网址里带着分享的策略时，先校验，再请对方决定要不要打开。
+  // 只在浏览器里读（服务端渲染时没有 localStorage 和网址 hash），所以放在挂载后读一次。
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedStrategies(loadSavedStrategies(GAME_ID));
+    const code = shareFromHash(window.location.hash);
+    if (!code) return;
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const shared = decodeShare(code, GAME_ID);
+    if (shared.strategy) {
+      setEditor({ initial: shared.strategy, id: null, note: "这是别人分享给你的策略：先看看规则和预览，保存后才会出现在你的策略里。" });
+    } else {
+      setShareNotice(`分享链接里的策略打不开：${shared.issues.map((issue) => issue.message).join("；")}`);
+    }
+  }, []);
+
+  const openEditor = (id: string | null) => {
+    const saved = id ? savedStrategies.find((item) => item.id === id) : undefined;
+    setSettingsSeat(null);
+    setEditor({ initial: saved ? structuredClone(saved.strategy) : blankStrategy(), id: saved ? saved.id : null });
+  };
+
+  const saveFromEditor = (strategy: RuleStrategy, id: string | null) => {
+    const result = saveStrategy(savedStrategies, id, strategy);
+    setSavedStrategies(result.list);
+    setEditor(null);
+    setStrategyId(result.id);
+    setShareNotice(
+      result.stored
+        ? `「${strategy.name}」已保存。点任意赌客的铭牌就能让他用它托管，或在下面“再开 1,000 桌”里跑它。`
+        : `「${strategy.name}」这次能用，但浏览器没让保存（可能是无痕模式），刷新后会消失。`,
+    );
+  };
 
   const observedEv = table.totalWagered ? (table.playerNet / table.totalWagered) * 100 : 0;
   const zeroSum = table.dealerProfit + table.playerNet;
@@ -827,6 +881,7 @@ export default function Simulator() {
     showTable(0);
     commitDisplays(createInitialDisplays());
     commitCasino(createInitialCasino());
+    forgetStrategyNotes();
   };
 
   const runMonteCarlo = () => {
@@ -858,7 +913,9 @@ export default function Simulator() {
       setMcStatus("idle");
       worker.terminate();
     };
-    worker.postMessage({ runs: 1000, maxRounds: 1000, bankroll: 1000, strategyId, rebuy: mcRebuy });
+    // 编辑器里搭的策略：把规则一起交给后台线程（它看不到页面上注册的策略）
+    const rules = savedStrategies.find((item) => item.id === strategyId)?.strategy;
+    worker.postMessage({ runs: 1000, maxRounds: 1000, bankroll: 1000, strategyId, rebuy: mcRebuy, rules });
   };
 
   const toggleRunning = () => {
@@ -944,17 +1001,31 @@ export default function Simulator() {
     };
   };
 
+  // 用自定义策略托管的座位：这一局（或刚结算的那一局）策略的决定和理由
+  const strategyNoteFor = (index: number) => {
+    const seat = table.seats[index];
+    if (!seat || seat.control.kind !== "auto" || !isCustomStrategyId(seat.control.strategyId)) return null;
+    const note = strategyNotes.latest(seat.visitId);
+    return note && note.round === table.round ? note : null;
+  };
+
   const seatModels: SeatModel[] = table.seats.map((seat, index) => {
     const view = overview?.seats[index];
     const settlement = showingSettled ? settlementBySeat.get(index) : undefined;
+    const note = strategyNoteFor(index);
     return {
       index,
       plaque: plaqueFor(index),
       cards: seat && view?.participating ? view.cards : null,
       label: view?.label ?? null,
       lost: Boolean(settlement && settlement.delta < 0),
+      note: note ? <StrategyBubble note={note} variables={variables} compact /> : null,
     };
   });
+  const tableStrategyNotes = table.seats
+    .flatMap((seat) => (seat ? strategyNotes.all(seat.visitId) : []))
+    .sort((a, b) => b.round - a.round)
+    .slice(0, 10);
 
   // ---------- 发牌动画（纯显示）：新一局时牌从牌靴一张张飞向各家，发完一起翻开 ----------
   const dealOrder = [...seatModels.filter((model) => model.plaque && model.cards).map((model) => model.index), -1];
@@ -1017,6 +1088,9 @@ export default function Simulator() {
       net={settingsTarget.bankroll - settingsTarget.totalBuyIn}
       control={settingsTarget.control}
       strategies={strategies.map((item) => ({ id: item.id, name: item.name, short: item.short }))}
+      customStrategies={customOptions}
+      onEditCustom={(id) => openEditor(id)}
+      onNewCustom={() => openEditor(null)}
       editable={table.phase === "idle"}
       onSetControl={(control) => setSeatControl(settingsIndex, control)}
       onReplace={() => {
@@ -1301,7 +1375,10 @@ export default function Simulator() {
                         </span>
                       </SeatAnchor>
                     )}
-                    <SeatAnchor seatIndex={model.index} ring="plaque" className="pe-plaque-anchor">
+                    <SeatAnchor seatIndex={model.index} ring="plaque" className={`pe-plaque-anchor pe-plaque-anchor--s${model.index}`}>
+                      {model.plaque && strategyNoteFor(model.index) && (
+                        <StrategyBubble note={strategyNoteFor(model.index)!} variables={variables} />
+                      )}
                       {model.plaque ? (
                         <Plaque data={model.plaque} seatNumber={model.index + 1} onClick={() => openSeat(model.index)} />
                       ) : (
@@ -1428,6 +1505,9 @@ export default function Simulator() {
                 <p className="pe-cap">还没有人离场。</p>
               )}
             </article>
+            {(savedStrategies.length > 0 || tableStrategyNotes.length > 0) && (
+              <StrategyLog notes={tableStrategyNotes} variables={variables} />
+            )}
             <RoundLog
               round={lastRound}
               dealerLabel={logView?.dealer.label ? `${logView.dealer.label} ×${logView.dealer.multiplier}` : null}
@@ -1467,6 +1547,29 @@ export default function Simulator() {
                 {strategy.name}
               </button>
             ))}
+          </div>
+          <div className="pe-strats pe-strats--mine" role="radiogroup" aria-label="我的策略">
+            {customOptions.map((strategy) => (
+              <button
+                key={strategy.id}
+                role="radio"
+                aria-checked={strategyId === strategy.id}
+                className={strategyId === strategy.id ? "is-on" : ""}
+                onClick={() => setStrategyId(strategy.id)}
+                disabled={mcStatus === "running"}
+                title={strategy.short}
+              >
+                {strategy.name}
+              </button>
+            ))}
+            {customOptions.some((item) => item.id === strategyId) && (
+              <button className="pe-strats__act" onClick={() => openEditor(strategyId)} disabled={mcStatus === "running"}>
+                改这个
+              </button>
+            )}
+            <button className="pe-strats__act" onClick={() => openEditor(null)}>
+              ＋ 搭一个自己的策略
+            </button>
           </div>
           <label className="pe-toggle" title={REBUY_RULE_TEXT}>
             <input
@@ -1529,6 +1632,15 @@ export default function Simulator() {
                   平均期末本金
                   <b>{points(mcResult.averageEndingBankroll)}</b>
                 </div>
+                {mcResult.netPerPointWagered !== undefined && (
+                  <div title="所有桌加起来：输赢 ÷ 投注总额。理论值约 −1.77 到 −2.31">
+                    每投注 100 点
+                    <b className={mcResult.netPerPointWagered < 0 ? "is-loss" : "is-win"}>
+                      {mcResult.netPerPointWagered < 0 ? "−" : "+"}
+                      {Math.abs(mcResult.netPerPointWagered * 100).toFixed(2)}
+                    </b>
+                  </div>
+                )}
                 {mcResult.rebuy && (
                   <>
                     <div>
@@ -1710,6 +1822,34 @@ export default function Simulator() {
               </>
             )}
           </section>
+        </div>
+      )}
+      {editor && (
+        <StrategyEditor
+          key={editor.id ?? "new"}
+          gameId={GAME_ID}
+          initial={editor.initial}
+          savedId={editor.id}
+          note={editor.note}
+          onSave={saveFromEditor}
+          onDelete={
+            editor.id
+              ? () => {
+                  setSavedStrategies(deleteStrategy(savedStrategies, editor.id!));
+                  if (strategyId === editor.id) setStrategyId("flat");
+                  setEditor(null);
+                }
+              : undefined
+          }
+          onClose={() => setEditor(null)}
+        />
+      )}
+      {shareNotice && (
+        <div className="pe-toast" role="status">
+          <span>{shareNotice}</span>
+          <button type="button" onClick={() => setShareNotice(null)} aria-label="关闭提示">
+            ×
+          </button>
         </div>
       )}
     </main>

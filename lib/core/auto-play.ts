@@ -8,12 +8,24 @@ import {
   pendingSeats,
 } from "./table.ts";
 import { observe } from "./observe.ts";
+import type { StrategyInput, StrategyModule } from "./game-module.ts";
 import type { RNG, Seat, TableState } from "./types.ts";
 import { planBlocksRebuy, planExit } from "./visit.ts";
 
 export interface AutoPlayOptions {
   /** Let auto seats randomly rebuy when they would otherwise leave (see AUTO_REBUY). */
   rebuy?: boolean;
+  /**
+   * Called each time a strategy decides a bet, with exactly what it saw. For display only
+   * (e.g. showing on the table why a custom strategy bet what it bet); it cannot change the bet.
+   */
+  onDecide?: (event: {
+    table: TableState;
+    seatIndex: number;
+    strategy: StrategyModule;
+    input: StrategyInput;
+    action: unknown;
+  }) => void;
 }
 
 /**
@@ -82,7 +94,12 @@ export function actForSeat(
   const decide = (current: TableState) => {
     const observation = observe(current, seatIndex);
     if (!observation.spec) return null;
-    return strategy.act({ ...observation, spec: observation.spec });
+    const check = (action: unknown) =>
+      mod.validate(current.roundCtx!.gameState, seatIndex, action, current.seats[seatIndex]!);
+    const input = { ...observation, spec: observation.spec, check };
+    const action = strategy.act(input);
+    options.onDecide?.({ table: current, seatIndex, strategy, input, action });
+    return action;
   };
 
   const leave = (current: TableState) =>

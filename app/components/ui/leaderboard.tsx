@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { lifetimeLedgers } from "@/lib/core/lifetime";
+import { isCustomStrategyId } from "@/lib/core/registry";
 import type { TableState } from "@/lib/core/types";
 import { NICKNAME_MAX, type LeaderboardData } from "@/lib/leaderboard";
 import { formatSigned } from "./plaque";
@@ -74,10 +75,13 @@ export function useLeaderboardSync(casino: TableState[], personId: string) {
     for (const table of casino) {
       for (const seat of table.seats) {
         if (!seat || seat.personId !== personId) continue;
+        // 编辑器里搭的策略只在自己的浏览器里有，别人看不懂它的 id：统一记成“自定义”。
         const label =
           seat.control.kind === "human"
             ? "manual"
-            : seat.control.strategyId;
+            : isCustomStrategyId(seat.control.strategyId)
+              ? "custom"
+              : seat.control.strategyId;
         const set = controlsRef.current.get(seat.visitId) ?? new Set<string>();
         set.add(label);
         controlsRef.current.set(seat.visitId, set);

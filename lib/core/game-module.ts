@@ -1,4 +1,4 @@
-import type { ActionSpec } from "./actions.ts";
+import type { ActionSpec, ParamField } from "./actions.ts";
 import type {
   BustRecord,
   Outcome,
@@ -52,6 +52,15 @@ export interface GameModule {
 
   /** The game-specific variables a strategy can read (bets, hand types…), for the editor. */
   observationCatalog?(): ObservationField[];
+
+  /**
+   * The numbers a rule strategy fills in to make a bet (for niuniu: 前注, 后注), with their
+   * limits. Together with `paramsToAction` this lets the strategy editor work with the game.
+   */
+  paramFields?(): ParamField[];
+
+  /** Turn filled-in numbers (keys from `paramFields`) into this game's action. */
+  paramsToAction?(values: Record<string, number>): unknown;
 }
 
 /**
@@ -153,8 +162,15 @@ export interface ObservationField {
   description?: string;
 }
 
-/** A strategy acts only on its turn to bet, so `spec` is always there. */
-export type StrategyInput = Observation & { spec: ActionSpec };
+/**
+ * A strategy acts only on its turn to bet, so `spec` is always there. `check` tells whether an
+ * action would be accepted (GameModule.validate for this seat), so a strategy can avoid
+ * handing the table an illegal bet. It reveals nothing beyond the rules.
+ */
+export type StrategyInput = Observation & {
+  spec: ActionSpec;
+  check?: (action: unknown) => string | null;
+};
 
 export interface StrategyModule {
   readonly id: string;

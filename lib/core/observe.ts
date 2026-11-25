@@ -150,6 +150,7 @@ const SEAT_FIELDS = (prefix: string, group: ObservationField["group"], who: stri
  */
 export const CORE_OBSERVATION_FIELDS: ObservationField[] = [
   ...SEAT_FIELDS("me", "me", "我的"),
+  { path: "me.seatIndex", label: "我的座位号（从 0 起）", group: "me", type: "number" },
   { path: "me.initialBankroll", label: "我这趟带来的钱", group: "me", type: "number", unit: "points" },
   { path: "me.planRemaining.toStopWin", label: "离止盈还差", group: "me", type: "number", unit: "points", nullable: true },
   { path: "me.planRemaining.toStopLoss", label: "离止损还能输", group: "me", type: "number", unit: "points", nullable: true },

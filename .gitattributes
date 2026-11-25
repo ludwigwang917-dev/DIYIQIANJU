@@ -1,0 +1,5 @@
+# Windows batch files must use CRLF. With LF only, cmd misreads line positions in a UTF-8
+# .bat (chcp 65001 + Chinese text) and silently skips commands: 一键打开.bat skipped its
+# build and copy steps and kept serving an old build (found 2026-11-25).
+*.bat text eol=crlf
+*.cmd text eol=crlf

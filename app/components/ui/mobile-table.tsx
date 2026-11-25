@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Hand, type HandCard, type HandDeal } from "./hand";
 import { Avatar, DealerLast, EmptySeat, Plaque, type PlaqueData } from "./plaque";
 
@@ -12,6 +13,8 @@ export interface SeatModel {
   cards: HandCard[] | null;
   label: string | null;
   lost: boolean;
+  /** 用自定义策略托管时，这一注的理由气泡 */
+  note?: ReactNode;
 }
 
 export function MobileTable({
@@ -59,6 +62,7 @@ export function MobileTable({
             className="pe-mseat__hand"
             deal={dealFor?.(seat.index)}
           />
+          {seat.note}
           <Plaque data={seat.plaque} seatNumber={seat.index + 1} onClick={() => onSeatClick(seat.index)} compact />
         </>
       ) : (

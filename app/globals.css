@@ -640,3 +640,139 @@ a { color: inherit; }
   .pe-board__nick label { flex: 1 1 100%; }
   .pe-board__table th:nth-child(2), .pe-board__table td:nth-child(2) { display: none; }
 }
+
+/* ---------- 策略编辑器（积木 + 公式，2026-11-25） ---------- */
+.pe-link-btn { padding: 2px 0; border: 0; border-bottom: 1px dashed rgba(201, 163, 92, 0.5); background: none; font-size: 12px; color: var(--brass); cursor: pointer; }
+.pe-link-btn:hover { color: #f0d394; }
+.pe-icon-btn { flex: 0 0 auto; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: none; color: var(--muted); cursor: pointer; line-height: 1; }
+.pe-icon-btn:hover:not(:disabled) { border-color: var(--brass); color: var(--text); }
+.pe-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.pe-pop__mine { margin: -4px 0 12px; }
+.pe-pop__mine.is-muted .pe-pop__list { opacity: 0.45; }
+.pe-pop__mine .pe-label { margin-bottom: 6px; }
+.pe-pop__mine .pe-pop__list { margin-bottom: 8px; }
+.pe-pop__custom { display: flex; }
+.pe-pop__list .pe-pop__custom button:first-child { flex: 1; }
+.pe-pop__list .pe-pop__edit { width: auto; flex: 0 0 auto; padding: 7px 10px; border-left: 1px solid #241c13; color: var(--brass); font-size: 12px; }
+
+.pe-strats--mine { align-items: center; }
+.pe-strats .pe-strats__act { border-style: dashed; color: var(--brass); }
+
+.pe-editor { width: min(1240px, 100%); padding: 28px 32px 0; }
+.pe-editor__head { padding-right: 40px; }
+.pe-editor__title { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 10px 0 8px; }
+.pe-editor__name { flex: 1 1 260px; min-width: 0; padding: 6px 2px; border: 0; border-bottom: 1px solid var(--line-strong); background: none; font: 700 24px var(--serif); }
+.pe-editor__name:focus { outline: none; border-bottom-color: var(--brass); }
+.pe-editor__template { height: 34px; max-width: 100%; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: #120e0a; font-size: 13px; }
+.pe-editor__note { margin: 6px 0; padding: 8px 12px; border-left: 2px solid var(--brass); background: rgba(201, 163, 92, 0.08); font-size: 13px; color: #e8c98a; }
+.pe-editor__hint { margin: 6px 0 0; font-size: 12px; line-height: 1.7; color: var(--faint); }
+.pe-editor__body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; margin-top: 18px; }
+.pe-editor__views { width: 220px; margin-bottom: 14px; }
+.pe-editor__add { width: 100%; height: 36px; margin: 2px 0 12px; border-style: dashed; font-size: 13px; }
+.pe-editor__issues { margin: 12px 0 0; padding: 10px 14px 10px 30px; border: 1px solid rgba(226, 122, 98, 0.45); border-radius: 8px; background: rgba(226, 122, 98, 0.07); font-size: 12px; line-height: 1.7; color: #f0a08c; }
+.pe-editor__issues b { margin-right: 8px; color: var(--lose); }
+.pe-editor__text textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: 8px; background: #0c0a07; font: 13px/1.8 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--text); resize: vertical; }
+.pe-editor__err { margin: 8px 0 0; font-size: 12px; color: var(--lose); }
+.pe-editor__foot { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 22px -32px 0; padding: 14px 32px; border-top: 1px solid var(--line); background: linear-gradient(180deg, rgba(17, 14, 10, 0.94), #0f0c09); }
+.pe-editor__spacer { flex: 1; }
+.pe-editor__copied { max-width: 420px; color: var(--win); }
+
+.pe-rule { margin-bottom: 12px; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: 10px; background: #120f0b; }
+.pe-rule > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.pe-rule > header b { font: 700 15px var(--serif); color: var(--brass); }
+.pe-rule > header > span { font-size: 12px; color: var(--faint); }
+.pe-rule__tools { display: flex; gap: 4px; margin-left: auto; }
+.pe-rule--otherwise { border-style: dashed; background: #0f0c09; }
+.pe-rule__then { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #241c13; }
+.pe-rule--otherwise .pe-rule__then { margin-top: 0; padding-top: 0; border-top: 0; }
+.pe-rule__kw { padding-top: 7px; font: 700 13px var(--serif); color: var(--muted); }
+
+.pe-cond__join { width: 200px; margin-bottom: 8px; }
+.pe-cond__join button { font-size: 12px; padding: 4px 0; }
+.pe-cond__always { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.pe-cond__row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; margin-bottom: 6px; }
+.pe-cond__glue { padding: 6px 4px 0 0; font: 700 12px var(--serif); color: var(--brass); }
+.pe-cond__op { height: 32px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 6px; background: #1a150f; font: 15px var(--num); }
+.pe-cond__add { display: flex; gap: 16px; margin-top: 4px; }
+
+.pe-bet-row { display: flex; flex: 1; flex-wrap: wrap; gap: 10px 18px; }
+.pe-bet-row__field { display: flex; align-items: flex-start; gap: 8px; }
+.pe-bet-row__field > span { padding-top: 7px; font-size: 13px; white-space: nowrap; }
+.pe-bet-row__field > span small { margin-left: 4px; font: 10px var(--num); color: var(--faint); }
+
+.pe-slot { display: inline-flex; flex-wrap: wrap; align-items: flex-start; max-width: 100%; border: 1px solid var(--line-strong); border-radius: 6px; background: #0c0a07; }
+.pe-slot select, .pe-slot input { height: 30px; border: 0; background: none; font-size: 13px; }
+.pe-slot__mode { padding: 0 4px 0 8px; border-right: 1px solid var(--line) !important; font-size: 11px !important; color: var(--brass); }
+.pe-slot__num { width: 72px; padding: 0 8px; font-family: var(--num) !important; font-size: 15px !important; }
+.pe-slot__pick { max-width: 240px; padding: 0 6px; }
+.pe-slot__formula { display: flex; flex-direction: column; }
+.pe-slot__formula input { width: min(360px, 60vw); padding: 0 8px; font: 12px ui-monospace, "Cascadia Mono", Consolas, monospace !important; }
+.pe-slot__formula input[aria-invalid="true"] { color: #f0a08c; }
+.pe-slot__error { padding: 0 8px 6px; font-size: 11px; color: var(--lose); }
+.pe-slot select option, .pe-slot select optgroup { background: #17130e; color: var(--text); }
+.pe-cond__op option, .pe-editor__template option, .pe-editor__template optgroup { background: #17130e; color: var(--text); }
+
+.pe-editor__side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pe-compare, .pe-preview { padding: 16px 18px; border: 1px solid #2e2419; border-radius: 12px; background: #0c0a07; }
+.pe-compare h3, .pe-preview h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 10px; font: 700 16px var(--serif); }
+.pe-compare h3 small { font: 400 12px var(--sans); color: var(--faint); }
+.pe-preview h3 .pe-link-btn { margin-left: auto; }
+.pe-compare table, .pe-preview table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pe-compare th, .pe-compare td { padding: 7px 8px; border-bottom: 1px solid #1f1912; text-align: right; font-family: var(--num); font-weight: 400; }
+.pe-compare thead th { font: 500 12px var(--sans); color: var(--muted); }
+.pe-compare tbody th { text-align: left; font: 12px var(--sans); color: var(--faint); }
+.pe-compare__key th, .pe-compare__key td { border-bottom: 0; font-size: 18px; }
+.pe-compare__key th { font-size: 13px !important; color: var(--text) !important; }
+.pe-compare__wait { margin: 18px 0; font-size: 13px; color: var(--muted); }
+.pe-preview__scroll { max-height: 360px; overflow: auto; margin: 0 -6px; }
+.pe-preview th { position: sticky; top: 0; padding: 6px; background: #0c0a07; font: 500 11px var(--sans); color: var(--muted); text-align: left; }
+.pe-preview td { padding: 5px 6px; border-top: 1px solid #1a150f; font-family: var(--num); white-space: nowrap; }
+.pe-preview tr.has-note td { border-bottom: 0; }
+.pe-preview__noterow td { padding-top: 0; border-top: 0; font: 11px var(--sans); color: #e8c98a; white-space: normal; }
+.pe-preview__legend { margin-top: 10px; }
+
+.pe-toast { position: fixed; left: 50%; bottom: 24px; z-index: 70; display: flex; align-items: flex-start; gap: 12px; width: min(560px, calc(100% - 32px)); padding: 12px 14px 12px 18px; border: 1px solid var(--brass); border-radius: 10px; background: #17130e; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6); transform: translateX(-50%); font-size: 13px; line-height: 1.6; }
+.pe-toast span { flex: 1; }
+.pe-toast button { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+
+@media (max-width: 1180px) {
+  .pe-editor__body { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 820px) {
+  .pe-editor { padding: 22px 14px 0; }
+  .pe-editor__name { font-size: 20px; }
+  .pe-editor__foot { margin: 18px -14px 0; padding: 12px 14px; }
+  .pe-editor__foot .pe-btn { flex: 1 1 40%; }
+  .pe-editor__spacer { display: none; }
+  .pe-slot__formula input { width: 100%; min-width: 200px; }
+  .pe-toast { bottom: 96px; }
+}
+
+/* ---------- 牌桌上：自定义策略这一注的理由（2026-11-25） ---------- */
+/* 桌面：挂在铭牌正上方（铭牌锚点内绝对定位），两行。 */
+.pe-plaque-anchor > .pe-stratnote { position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: auto; }
+/* 两端座位的下注框紧挨铭牌上方，而铭牌下面空着：气泡放到铭牌下面。 */
+.pe-plaque-anchor--s0 > .pe-stratnote,
+.pe-plaque-anchor--s4 > .pe-stratnote { top: calc(100% + 3px); bottom: auto; }
+.pe-stratnote { display: flex; flex-direction: column; gap: 0; width: max-content; max-width: 230px; padding: 3px 8px 4px; border: 1px solid rgba(201, 163, 92, 0.75); border-radius: 7px; background: rgba(12, 10, 7, 0.9); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); font-size: 10.5px; line-height: 1.4; text-align: left; color: #e8dfca; animation: pe-note-in 0.25s ease-out; }
+.pe-stratnote b { display: flex; gap: 6px; align-items: baseline; font: 700 11.5px var(--serif); color: var(--brass); white-space: nowrap; }
+.pe-stratnote b span { overflow: hidden; text-overflow: ellipsis; }
+.pe-stratnote b em { font: 400 11.5px var(--num); font-style: normal; color: var(--text); }
+.pe-stratnote b i { font-style: normal; color: #e8c98a; cursor: help; }
+.pe-stratnote__why { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pe-stratnote--m { width: 100%; max-width: none; }
+.pe-stratnote--m .pe-stratnote__why { white-space: normal; }
+@keyframes pe-note-in { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+
+.pe-stratlog ol { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
+.pe-stratlog li { display: grid; grid-template-columns: 58px minmax(90px, 0.8fr) minmax(0, 1.6fr) auto; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid #1f1912; font-size: 12px; }
+.pe-stratlog li:first-child { border-top: 0; }
+.pe-stratlog__round { font: 12px var(--num); color: var(--faint); }
+.pe-stratlog__who small, .pe-stratlog__why small { display: block; font-size: 11px; color: var(--faint); }
+.pe-stratlog__why small { color: #e8c98a; }
+.pe-stratlog li b { font: 400 12px var(--num); color: var(--text); white-space: nowrap; }
+@media (max-width: 820px) {
+  .pe-stratlog li { grid-template-columns: 48px minmax(0, 1fr) auto; }
+  .pe-stratlog__why { grid-column: 2 / -1; grid-row: 2; }
+}

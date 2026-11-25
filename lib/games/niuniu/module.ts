@@ -233,6 +233,14 @@ export const niuniuModule: GameModule = {
     return NIUNIU_OBSERVATION_FIELDS;
   },
 
+  paramFields() {
+    return BET_SPEC.kind === "params" ? BET_SPEC.fields : [];
+  },
+
+  paramsToAction(values: Record<string, number>): PlaceBetAction {
+    return { kind: "place_bet", front: values.front ?? 0, back: values.back ?? 0 };
+  },
+
   totalWager(actions: (unknown | null)[]): number {
     let total = 0;
     for (const action of actions) {

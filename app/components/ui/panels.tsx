@@ -288,6 +288,9 @@ export function SeatSettings({
   net,
   control,
   strategies,
+  customStrategies = [],
+  onEditCustom,
+  onNewCustom,
   editable,
   onSetControl,
   onReplace,
@@ -304,6 +307,10 @@ export function SeatSettings({
   visitText?: string;
   control: { kind: "human" } | { kind: "auto"; strategyId: string };
   strategies: StrategyOption[];
+  /** 策略编辑器里搭的、存在这个浏览器里的策略 */
+  customStrategies?: StrategyOption[];
+  onEditCustom?: (id: string) => void;
+  onNewCustom?: () => void;
   /** 只有两局之间才能改 */
   editable: boolean;
   onSetControl: (control: { kind: "human" } | { kind: "auto"; strategyId: string }) => void;
@@ -382,6 +389,42 @@ export function SeatSettings({
           );
         })}
       </ul>
+      {(customStrategies.length > 0 || onNewCustom) && (
+        <div className={`pe-pop__mine ${control.kind === "human" ? "is-muted" : ""}`}>
+          <span className="pe-label">我的策略</span>
+          <ul className="pe-pop__list">
+            {customStrategies.map((strategy) => {
+              const on = control.kind === "auto" && control.strategyId === strategy.id;
+              return (
+                <li key={strategy.id} className="pe-pop__custom">
+                  <button
+                    type="button"
+                    className={on ? "is-on" : ""}
+                    disabled={!editable}
+                    onClick={() => {
+                      setLastAuto(strategy.id);
+                      onSetControl({ kind: "auto", strategyId: strategy.id });
+                    }}
+                  >
+                    <span>{strategy.name}</span>
+                    <small>{strategy.short}</small>
+                  </button>
+                  {onEditCustom && (
+                    <button type="button" className="pe-pop__edit" onClick={() => onEditCustom(strategy.id)} aria-label={`编辑「${strategy.name}」`}>
+                      改
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {onNewCustom && (
+            <button type="button" className="pe-link-btn" onClick={onNewCustom}>
+              ＋ 搭一个新策略
+            </button>
+          )}
+        </div>
+      )}
       <div className="pe-pop__acts">
         <button type="button" className="pe-btn" disabled={!editable} onClick={onReplace}>
           换一位赌客
