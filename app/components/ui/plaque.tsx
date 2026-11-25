@@ -71,7 +71,9 @@ export function Plaque({
       <span className="pe-plaque__info">
         <span className="pe-plaque__nm">
           <b>{data.name}</b>
-          <span className="pe-tag">{data.tag}</span>
+          <span className={`pe-tag pe-tag--mode ${data.manual ? "is-manual" : "is-auto"}`}>
+            {data.manual ? "手动" : <><i>托管</i><span>{data.tag}</span></>}
+          </span>
         </span>
         <span className="pe-plaque__row">
           <span className={`pe-plaque__total ${data.net > 0 ? "is-win" : data.net < 0 ? "is-loss" : ""}`}>

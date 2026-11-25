@@ -1088,6 +1088,9 @@ export default function Simulator() {
       left: Math.min(Math.max(x, 150), STAGE_W - 150),
       top: y - 44,
       transform: "translate(-50%, -100%)",
+      // 往上展开不能超出牌桌区域，否则最上面的托管/手动开关会被裁掉
+      maxHeight: y - 44 - 8,
+      overflowY: "auto",
     };
   };
   const settingsElement = settingsTarget ? (

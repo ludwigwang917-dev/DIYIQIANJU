@@ -348,26 +348,32 @@ export function SeatSettings({
         </span>
         <span className={net > 0 ? "is-win" : net < 0 ? "is-loss" : ""}>总输赢 {formatSigned(net)}</span>
       </h4>
-      {visitText && <p className="pe-pop__visit">{visitText}</p>}
       {!editable && <p className="pe-pop__lock">牌局进行中，下一局开始前才能修改。</p>}
-      <div className="pe-seg" role="radiogroup" aria-label="控制方式">
+      <div className="pe-seg pe-mode-seg" role="radiogroup" aria-label="谁来下注">
         <button
           type="button"
+          role="radio"
+          aria-checked={control.kind === "auto"}
           className={control.kind === "auto" ? "is-on" : ""}
           disabled={!editable}
           onClick={() => onSetControl({ kind: "auto", strategyId: lastAuto })}
         >
-          托管
+          <b>托管</b>
+          <small>按策略自动下注</small>
         </button>
         <button
           type="button"
+          role="radio"
+          aria-checked={control.kind === "human"}
           className={control.kind === "human" ? "is-on" : ""}
           disabled={!editable}
           onClick={() => onSetControl({ kind: "human" })}
         >
-          手动
+          <b>手动</b>
+          <small>你自己点筹码下注</small>
         </button>
       </div>
+      {visitText && <p className="pe-pop__visit">{visitText}</p>}
       <ul className={`pe-pop__list ${control.kind === "human" ? "is-muted" : ""}`}>
         {strategies.map((strategy) => {
           const on = control.kind === "auto" && control.strategyId === strategy.id;
