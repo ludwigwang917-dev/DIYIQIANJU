@@ -1,6 +1,10 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 
+// 全站排行榜的 D1（2026-11-25 用 `wrangler d1 create diyiqianju-leaderboard` 建，区域 WEUR）。
+// 本地开发时 Miniflare 用同一个 id 在 .wrangler/ 下建本地库，不会碰线上数据。
+const D1_DATABASE_ID = "0c98e530-941e-479e-95f3-b0004b4b95d3";
+
 const localBindingConfig = {
   // Worker name = the workers.dev subdomain (https://<name>.<account>.workers.dev).
   // Still the pre-rename package name; whether to change it is the owner's call.
@@ -15,8 +19,13 @@ const localBindingConfig = {
     { pattern: "diyiqianju.com", custom_domain: true },
     { pattern: "www.diyiqianju.com", custom_domain: true },
   ],
-  // No D1 or R2 bindings.
-  d1_databases: [],
+  d1_databases: [
+    {
+      binding: "DB",
+      database_name: "diyiqianju-leaderboard",
+      database_id: D1_DATABASE_ID,
+    },
+  ],
   r2_buckets: [],
 };
 

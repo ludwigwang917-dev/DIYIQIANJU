@@ -10,10 +10,12 @@
  * Static files under /assets and /public are served by Workers Static Assets before
  * this code runs; their headers come from `public/_headers`.
  *
- * The site has no database, no image optimisation and no third-party scripts, so the
- * template's D1 / IMAGES handling was removed (it pointed at bindings that do not exist).
+ * No image optimisation and no third-party scripts. The D1 binding `DB` (leaderboard,
+ * 2026-11-25) is read by the API routes through `cloudflare:workers`, not here.
  */
 import handler from "vinext/server/app-router-entry";
+// The leaderboard reads these geo headers; only this worker may set them.
+import { GEO_HEADERS } from "../lib/leaderboard";
 
 type WorkerEnv = Parameters<typeof handler.fetch>[1];
 
@@ -60,13 +62,29 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
     "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
 };
 
+
+type CfGeo = { country?: string; region?: string; city?: string };
+
+/** Copy Cloudflare's IP geolocation (request.cf) into headers, dropping any the client sent. */
+function withGeo(request: Request, headers: Headers): Headers {
+  const cf = (request as Request & { cf?: CfGeo }).cf;
+  for (const [key, name] of Object.entries(GEO_HEADERS)) {
+    headers.delete(name);
+    const value = cf?.[key as keyof CfGeo];
+    if (typeof value === "string" && value) headers.set(name, encodeURIComponent(value.slice(0, 64)));
+  }
+  return headers;
+}
+
 const worker = {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     // The Vite dev server injects its own inline scripts; only lock down real builds.
-    if (import.meta.env.DEV) return handler.fetch(request, env, ctx);
+    if (import.meta.env.DEV) {
+      return handler.fetch(new Request(request, { headers: withGeo(request, new Headers(request.headers)) }), env, ctx);
+    }
 
     const csp = contentSecurityPolicy(createNonce());
-    const forwarded = new Headers(request.headers);
+    const forwarded = withGeo(request, new Headers(request.headers));
     forwarded.set("content-security-policy", csp);
 
     const response = await handler.fetch(new Request(request, { headers: forwarded }), env, ctx);

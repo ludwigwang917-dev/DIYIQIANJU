@@ -101,7 +101,8 @@ test("static assets ship with cache and security headers, robots.txt, and a pinn
   const wrangler = JSON.parse(await readDist("dist/server/wrangler.json"));
   assert.equal(wrangler.name, "probability-ember-niuniu");
   assert.equal(wrangler.compatibility_date, "2026-05-15");
-  assert.deepEqual(wrangler.d1_databases, []);
+  // 全站排行榜（2026-11-25）用一个 D1：绑定名固定为 DB。
+  assert.deepEqual(wrangler.d1_databases?.map((db) => db.binding), ["DB"]);
   assert.deepEqual(wrangler.r2_buckets, []);
   assert.equal(wrangler.observability?.enabled, true);
 });

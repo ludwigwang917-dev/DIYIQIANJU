@@ -28,6 +28,7 @@ import { Hand, handFormula, type HandDeal } from "./ui/hand";
 import { MobileTable, type SeatModel } from "./ui/mobile-table";
 import { BetPanel, RebuyPanel, RoundLog, SeatSettings, type BetField } from "./ui/panels";
 import { Avatar, DealerLast, EmptySeat, Plaque, formatSigned, type PlaqueData } from "./ui/plaque";
+import { Leaderboard, useLeaderboardSync } from "./ui/leaderboard";
 import { Lobby, type LobbyTable } from "./ui/lobby";
 import { EntryPanel, LifetimeLedger, planText, type EntryCandidate, type LedgerRow } from "./ui/visit";
 
@@ -486,6 +487,7 @@ export default function Simulator() {
   const isMobile = useIsMobile();
   const game = getGame(GAME_ID);
   const strategies = getStrategies(GAME_ID);
+  const leaderboard = useLeaderboardSync(casino, YOU.personId);
   const pending = pendingSeats(table);
   const minStakeValue = minStake(GAME_ID);
   const unit = pointUnit(GAME_ID);
@@ -1445,6 +1447,8 @@ export default function Simulator() {
         </div>
         <LifetimeLedger rows={ledgerRows} />
       </section>
+
+      <Leaderboard sync={leaderboard} strategyName={strategyName} />
 
       <section className="pe-mc" aria-label="蒙特卡洛实验">
         <div className="pe-mc__copy">
