@@ -107,10 +107,20 @@ function valueText(value: Value | undefined, expr: Expr | undefined, variables: 
 
 /**
  * A condition that held: "我的连输 3 ≥ 3". One that did not: "我的连输 1，要 ≥ 2".
+ * An option compared with one of its values reads as words instead of symbols:
+ * "我的上一局：赢", "庄家对全桌在连：连输（要连赢）", "…：连输（不是连赢）".
  * The right side shows its value only when it is not a plain literal.
  */
 export function checkText(check: ConditionCheck, variables: Variables) {
   if (!check.op) return check.ok ? label(check.expr, variables) : `${label(check.expr, variables)} 不成立`;
+  const enumField = check.left && "v" in check.left ? variables.byPath.get(check.left.v) : undefined;
+  if (enumField?.type === "enum" && check.right && "s" in check.right && (check.op === "eq" || check.op === "ne")) {
+    const actual = valueText(check.leftValue, check.left, variables);
+    const wanted = valueText(check.rightValue, check.left, variables);
+    const head = `${enumField.label}：${actual}`;
+    if (check.op === "eq") return check.ok ? head : `${head}（要${wanted}）`;
+    return check.ok ? `${head}（不是${wanted}）` : `${head}（要不是${wanted}）`;
+  }
   const literal = check.right && ("n" in check.right || "s" in check.right || "b" in check.right);
   const field = check.left && "v" in check.left ? check.left : undefined;
   const right = literal
@@ -132,7 +142,7 @@ export function reasonText(note: StrategyNote, variables: Variables) {
   if (!note.traces.length) return "只有一种下法";
   const first = note.traces[0];
   const failed = first.checks.find((check) => !check.ok) ?? first.checks[0];
-  return failed ? `规则 1 没满足：${checkText(failed, variables)}` : "规则都没满足";
+  return failed ? `规则 1 没满足，${checkText(failed, variables)}` : "规则都没满足";
 }
 
 export function betText(note: StrategyNote) {
