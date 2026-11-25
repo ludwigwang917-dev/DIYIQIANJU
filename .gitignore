@@ -52,6 +52,3 @@ next-env.d.ts
 /.claude/
 # internal project log, kept local (it summarises the outreach plan)
 /PROJECT_CONTEXT.md
-# root screenshots and scripts of unknown origin (PROJECT_CONTEXT U-2)
-/*_test.png
-/test_*.ps1
