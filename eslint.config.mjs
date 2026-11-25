@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Wrangler state and the build copy that 一键打开.bat serves from .wrangler/play.
+    ".wrangler/**",
   ]),
 ]);
 
