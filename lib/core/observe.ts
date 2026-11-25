@@ -6,7 +6,7 @@ import type {
   SeatObservation,
 } from "./game-module.ts";
 import { getGame } from "./registry.ts";
-import { DEALERS, DEALER_SHIFT, nextToAct } from "./table.ts";
+import { DEALERS, DEALER_SHIFT, nextToAct, roundsThisShift } from "./table.ts";
 import type { Seat, TableState } from "./types.ts";
 import { visitNet } from "./visit.ts";
 
@@ -38,14 +38,7 @@ function seatObservation(table: TableState, seat: Seat, seatIndex: number, me: n
 
 function dealerObservation(table: TableState): DealerObservation {
   const history = table.roadLog;
-  // Settled rounds the current dealer has dealt in a row, counted back through the record.
-  let roundsThisShift = 0;
-  for (let index = history.length - 1; index >= 0; index -= 1) {
-    if (history[index].dealerIndex !== table.dealerIndex) break;
-    roundsThisShift += 1;
-  }
-  // The round being bet on, or the next one between rounds.
-  const upcoming = table.phase === "idle" ? table.round + 1 : table.round;
+  const dealt = roundsThisShift(table);
   let outcome: "win" | "loss" | "none" = "none";
   let length = 0;
   for (let index = history.length - 1; index >= 0; index -= 1) {
@@ -59,8 +52,8 @@ function dealerObservation(table: TableState): DealerObservation {
   return {
     index: table.dealerIndex,
     name: DEALERS[table.dealerIndex] ?? "",
-    roundsThisShift,
-    roundsLeftInShift: DEALER_SHIFT - ((upcoming - 1) % DEALER_SHIFT),
+    roundsThisShift: dealt,
+    roundsLeftInShift: DEALER_SHIFT - dealt,
     streak: { outcome, length },
     profit: table.dealerProfit,
   };

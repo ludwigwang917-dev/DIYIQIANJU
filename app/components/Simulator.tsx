@@ -15,6 +15,8 @@ import { StrategyBubble, StrategyLog, forgetStrategyNotes, recordStrategyDecisio
 import { deleteStrategy, loadSavedStrategies, saveStrategy, type SavedStrategy } from "./strategy/storage";
 import {
   DEALERS,
+  DEALER_SHIFT,
+  roundsThisShift,
   bustedSeats,
   createTable,
   dispatch,
@@ -947,6 +949,14 @@ export default function Simulator() {
 
   // ---------- 显示用数据（都从赌桌状态与游戏层视图整理，不另算规则） ----------
   const dealerName = DEALERS[table.dealerIndex];
+  // 荷官换班：每发满 DEALER_SHIFT 局（约半小时）换下一位；手动换人则重新计班。
+  const shiftDealt = roundsThisShift(table);
+  const lastDealerIndex = table.roadLog.at(-1)?.dealerIndex;
+  const justTookOver =
+    table.phase === "idle" && shiftDealt === 0 && lastDealerIndex !== undefined && lastDealerIndex !== table.dealerIndex;
+  const shiftText = justTookOver
+    ? `刚接班 · 接替 ${DEALERS[lastDealerIndex]}`
+    : `本班 ${shiftDealt}/${DEALER_SHIFT} 局 · 约半小时一换`;
   const dealerView = overview?.dealer;
   const dealerResult = dealerView?.label ? `${dealerView.label} ×${dealerView.multiplier}` : null;
   // 先下注、后亮牌：本局进行中但还没亮牌时，提示大家牌是扣着的。
@@ -1201,6 +1211,7 @@ export default function Simulator() {
       index,
       gameName: getGame(item.gameId).meta.name,
       dealerName: DEALERS[item.dealerIndex],
+      shiftLeft: DEALER_SHIFT - roundsThisShift(item),
       seats: item.seats.map((seat) =>
         !seat ? "empty" : seat.personId === YOU.personId ? "you" : "taken",
       ),
@@ -1321,7 +1332,8 @@ export default function Simulator() {
           {isMobile ? (
             <MobileTable
               dealerName={dealerName}
-              dealerNote={`${viewIndex + 1} 号桌 · ${game.meta.name}`}
+              dealerNote={`${viewIndex + 1} 号桌 · ${shiftText}`}
+              dealerFresh={justTookOver}
               dealerCards={dealerView?.cards ?? null}
               dealerResult={dealerResult}
               dealerLastDelta={dealerLastDelta}
@@ -1335,11 +1347,20 @@ export default function Simulator() {
             />
           ) : (
             <FeltTable oddsText={ODDS_TEXT} boxLabels={["前注", "后注"]}>
-              <button type="button" className="pe-dealer" onClick={rotateDealer} aria-label="更换荷官">
-                <Avatar name={dealerName} size={34} ring="#c9a35c" />
-                <b>
-                  {viewIndex + 1} 号桌 · 荷官 {dealerName}
-                </b>
+              <button
+                type="button"
+                className={`pe-dealer${justTookOver ? " is-fresh" : ""}`}
+                onClick={rotateDealer}
+                aria-label="更换荷官"
+                title={`荷官每发 ${DEALER_SHIFT} 局（约半小时）换班；点这里可以提前换人`}
+              >
+                <Avatar key={table.dealerIndex} name={dealerName} size={34} ring="#c9a35c" />
+                <span>
+                  <b>
+                    {viewIndex + 1} 号桌 · 荷官 {dealerName}
+                  </b>
+                  <small>{shiftText}</small>
+                </span>
               </button>
               <div className="pe-anchor pe-dealer-hand">
                 <Hand cards={dealerView?.cards} label={dealerView?.label} width={58} spacing={8} gap={14} deal={dealFor(-1, false)} />

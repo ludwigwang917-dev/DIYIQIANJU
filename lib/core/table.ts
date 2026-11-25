@@ -93,8 +93,18 @@ function newSeat(
  */
 export const ROAD_LOG_SIZE = 200;
 
-/** A dealer hands over to the next after every this many rounds (`round % DEALER_SHIFT === 0`). */
+/**
+ * A dealer hands over to the next after dealing this many rounds. Real tables relieve the dealer
+ * about every 30 minutes, and a full table deals roughly one round a minute (a full-size
+ * baccarat table runs about 40–60 hands an hour), so one shift is 30 rounds. A manual change
+ * starts a fresh shift.
+ */
 export const DEALER_SHIFT = 30;
+
+/** Settled rounds the current dealer has dealt in this shift. */
+export function roundsThisShift(table: TableState): number {
+  return table.round - (table.shiftStartRound ?? 0) - (table.phase === "idle" ? 0 : 1);
+}
 
 export function createTable(
   gameId: string,
@@ -114,6 +124,7 @@ export function createTable(
     round: 0,
     shuffleCount: 0,
     dealerIndex: opts.dealerIndex ?? 0,
+    shiftStartRound: 0,
     dealerProfit: 0,
     playerNet: 0,
     totalWagered: 0,
@@ -280,14 +291,17 @@ function advance(table: TableState): TableState {
 
     const wagered = mod.totalWager(table.roundCtx.actions);
     let dealerIndex = table.dealerIndex;
-    if (table.round % DEALER_SHIFT === 0) {
+    let shiftStartRound = table.shiftStartRound ?? 0;
+    if (table.round - shiftStartRound >= DEALER_SHIFT) {
       dealerIndex = (dealerIndex + 1) % DEALERS.length;
+      shiftStartRound = table.round;
     }
 
     return {
       ...table,
       phase: "idle",
       dealerIndex,
+      shiftStartRound,
       dealerProfit: table.dealerProfit + dealerDelta,
       playerNet: table.playerNet + playerDelta,
       totalWagered: table.totalWagered + wagered,
@@ -528,6 +542,7 @@ export function dispatch(table: TableState, action: AnyAction, rng: RNG): TableS
       return {
         ...table,
         dealerIndex: (table.dealerIndex + 1) % DEALERS.length,
+        shiftStartRound: table.round,
       };
     }
     case "table/leave":

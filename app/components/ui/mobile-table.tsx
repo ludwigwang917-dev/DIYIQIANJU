@@ -20,6 +20,7 @@ export interface SeatModel {
 export function MobileTable({
   dealerName,
   dealerNote,
+  dealerFresh,
   dealerCards,
   dealerResult,
   formula,
@@ -33,6 +34,8 @@ export function MobileTable({
 }: {
   dealerName: string;
   dealerNote?: string;
+  /** 荷官刚换班：铭牌闪一下 */
+  dealerFresh?: boolean;
   dealerCards: HandCard[] | null;
   dealerResult: string | null;
   /** 庄家还没亮牌时显示的文字。 */
@@ -87,7 +90,7 @@ export function MobileTable({
           <div className="pe-felt__fluff" />
           <div className="pe-mtable__light" />
           <div className="pe-mtable__content">
-            <button type="button" className="pe-dealer pe-dealer--m" onClick={onDealerClick} aria-label="更换荷官">
+            <button type="button" className={`pe-dealer pe-dealer--m${dealerFresh ? " is-fresh" : ""}`} onClick={onDealerClick} aria-label="更换荷官">
               <Avatar name={dealerName} size={24} ring="#c9a35c" />
               <b>荷官 · {dealerName}</b>
               {dealerNote && <small>{dealerNote}</small>}

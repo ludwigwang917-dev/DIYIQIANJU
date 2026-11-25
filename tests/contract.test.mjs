@@ -984,3 +984,41 @@ test("every variable in the observation catalog resolves to a value of its decla
     }
   }
 });
+
+// ---------- 荷官换班（2026-11-25） ----------
+
+test("the dealer hands over after DEALER_SHIFT rounds; a manual change starts a fresh shift", async () => {
+  const { playAutoRound } = await import("../lib/core/auto-play.ts");
+  const { DEALER_SHIFT, DEALERS } = await import("../lib/core/table.ts");
+  const rng = mulberry32(3030);
+  let table = makeTable(100000);
+  assert.equal(observe(table, 0).dealer.roundsLeftInShift, DEALER_SHIFT);
+
+  for (let round = 1; round < DEALER_SHIFT; round += 1) table = playAutoRound(table, "flat", rng);
+  assert.equal(table.dealerIndex, 0);
+  assert.equal(observe(table, 0).dealer.roundsThisShift, DEALER_SHIFT - 1);
+  assert.equal(observe(table, 0).dealer.roundsLeftInShift, 1);
+
+  table = playAutoRound(table, "flat", rng);
+  assert.equal(table.dealerIndex, 1, "hands over right after the 30th round");
+  assert.equal(table.roadLog.at(-1).dealerIndex, 0, "the 30th round was still dealt by the outgoing dealer");
+  assert.equal(observe(table, 0).dealer.roundsThisShift, 0);
+  assert.equal(observe(table, 0).dealer.roundsLeftInShift, DEALER_SHIFT);
+
+  // During a round the count does not jump: the round being dealt is still left in the shift.
+  const betting = dispatch(table, { type: "table/start_round" }, rng);
+  assert.equal(observe(betting, 0).dealer.roundsThisShift, 0);
+  assert.equal(observe(betting, 0).dealer.roundsLeftInShift, DEALER_SHIFT);
+
+  // A manual change midway gives the new dealer a full shift of their own.
+  for (let round = 0; round < 10; round += 1) table = playAutoRound(table, "flat", rng);
+  table = dispatch(table, { type: "table/rotate_dealer" }, rng);
+  assert.equal(table.dealerIndex, 2);
+  assert.equal(observe(table, 0).dealer.name, DEALERS[2]);
+  assert.equal(observe(table, 0).dealer.roundsThisShift, 0);
+  for (let round = 1; round < DEALER_SHIFT; round += 1) table = playAutoRound(table, "flat", rng);
+  assert.equal(table.dealerIndex, 2, "not cut short by the old schedule");
+  table = playAutoRound(table, "flat", rng);
+  assert.equal(table.dealerIndex, 3);
+  assertZeroSum(table);
+});

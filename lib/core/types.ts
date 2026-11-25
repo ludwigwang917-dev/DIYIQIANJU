@@ -171,6 +171,11 @@ export interface TableState {
   round: number;
   shuffleCount: number;
   dealerIndex: number;
+  /**
+   * `round` when the current dealer took over (0 for the first dealer). The dealer hands over
+   * after dealing DEALER_SHIFT rounds; a manual change starts a fresh shift.
+   */
+  shiftStartRound: number;
   dealerProfit: number;
   playerNet: number;
   totalWagered: number;

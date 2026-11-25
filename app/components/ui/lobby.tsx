@@ -17,6 +17,8 @@ export interface LobbyTable {
   /** 例如“斗牛” */
   gameName: string;
   dealerName: string;
+  /** 这位荷官还要发几局才换班 */
+  shiftLeft: number;
   seats: SeatDot[];
   /** 旧 → 新 */
   road: RoadMark[];
@@ -71,7 +73,7 @@ export function Lobby({
                 {table.viewing && !table.youHere && <span className="pe-lobby__tag is-muted">正在看</span>}
               </header>
               <p className="pe-lobby__meta">
-                荷官 {table.dealerName} · 已开 {fmt(table.rounds)} 局
+                荷官 {table.dealerName}（再 {table.shiftLeft} 局换班） · 已开 {fmt(table.rounds)} 局
               </p>
               <div className="pe-lobby__seats" aria-label={empty ? `空 ${empty} 位` : "满座"}>
                 {table.seats.map((seat, seatIndex) => (
