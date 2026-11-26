@@ -320,7 +320,9 @@
   50% { scale: 0 1.06; }
   100% { scale: 1 1; }
 }
-@keyframes pe-deal-hide { to { visibility: hidden; } }
+/* 首尾都写 hidden：只写 to 时，动画结束的进度可能被算成 0.9999…（如 1× 的 1.77 s 延迟），
+   visibility 只有进度正好为 1 才取 hidden，牌背就一直盖着牌面。 */
+@keyframes pe-deal-hide { from, to { visibility: hidden; } }
 
 @media (prefers-reduced-motion: reduce) {
   .pe-dealt, .pe-dealt--flip { animation: none; }
